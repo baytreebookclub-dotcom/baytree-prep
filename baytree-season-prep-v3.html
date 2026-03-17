@@ -461,7 +461,20 @@
         <span class="nav-check">✓</span>
       </div>
     </div>
-    <hr class="nav-divider">
+    <hr class="nav-divider" style="display:none;">
+    <div style="display:none;">
+      <div class="nav-label" style="margin-bottom:8px;">⚙️ Google Sheets 연동</div>
+      <input type="text" id="webhookUrl"
+        value="https://script.google.com/macros/s/AKfycbx_kC_USku-KtV8txSQ__I3eJupNj-Gpsdrwn9RO2wVwZ6fHVtlo9umsI0ZSp2yyL_XAw/exec"
+        placeholder="Apps Script 웹 앱 URL"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-size:11px;font-family:'Noto Sans KR',sans-serif;background:var(--cream);color:var(--ink);outline:none;margin-bottom:6px;"
+        onfocus="this.style.borderColor='var(--green-mid)'"
+        onblur="this.style.borderColor='var(--cream-dark)'"
+      >
+      <div style="font-size:10px;color:var(--ink-light);line-height:1.6;">
+        URL 입력 시 제출할 때 Sheets에 자동 저장 + Gmail 알림이 발송됩니다.
+      </div>
+    </div>
     <button class="preview-trigger-btn" onclick="openPreview()">
       <span>👁️</span> 상품 페이지 미리보기
     </button>
@@ -1604,407 +1617,333 @@ function downloadTxt() {
   showToast('저장되었어요!');
 }
 
-// ══════════ SUBMIT → 완성 HTML 생성 ══════════
-function submitPage() {
-  const clubName = v('clubName');
+// ══════════ SUBMIT → Sheets 저장 + HTML 생성 ══════════
+function collectData() {
+  var isNew    = document.getElementById('itNew').checked;
+  var hostRole = (document.querySelector('input[name="hostRole"]:checked') || {}).value || 'host';
+  var isMCont  = document.getElementById('mtCont') && document.getElementById('mtCont').checked;
+  var isAll    = document.getElementById('bmAll').checked;
+
+  return {
+    clubName:    v('clubName'),
+    season:      v('clubSeason') || '2605',
+    clubType:    v('clubType'),
+    price:       v('clubPrice'),
+    firstBook:   v('firstBookTitle') || v('b1title'),
+    day:         v('clubDay'),
+    time:        v('clubTimeInput'),
+    capacity:    v('clubCapacity'),
+    place:       v('clubPlace') || '베이트리 북클럽',
+    period:      v('clubPeriod'),
+    headline:    v(isNew ? 'clubHeadline' : 'contHeadline'),
+    introBody:   v(isNew ? 'clubIntroText' : 'contIntroText'),
+    hostRole:    hostRole,
+    hostName:    v('hostName'),
+    hostFinal:   v('hostFinal') || v('hostWhy'),
+    mateName:    v('mateName'),
+    mateFinal:   v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')),
+    seasonTheme: v('seasonTheme'),
+    b1title: v('b1title'), b1author: v('b1author'), b1reason: v('b1reason'),
+    b2title: isAll ? v('b2title') : '', b2author: isAll ? v('b2author') : '', b2reason: isAll ? v('b2reason') : '',
+    b3title: isAll ? v('b3title') : '', b3author: isAll ? v('b3author') : '', b3reason: isAll ? v('b3reason') : '',
+    b4title: isAll ? v('b4title') : '', b4author: isAll ? v('b4author') : '', b4reason: isAll ? v('b4reason') : ''
+  };
+}
+
+async function submitPage() {
+  var clubName = v('clubName');
   if (!clubName) { showToast('⚠️ 모임 이름을 먼저 입력해주세요.'); goSection(1); return; }
 
-  const html = generateFinalHTML();
-  const name = clubName.replace(/\s+/g, '-');
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${name}-2605-상품페이지.html`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`✅ "${clubName}" 상품 페이지가 생성되었어요!`);
+  var data        = collectData();
+  var webhookUrl  = v('webhookUrl');
+  var htmlContent = generateFinalHTML();
+  var results     = { sheets: null, html: false };
+
+  // ① Google Sheets 전송
+  if (webhookUrl) {
+    showToast('📤 Google Sheets에 전송 중...');
+    try {
+      var res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      var json = await res.json();
+      results.sheets = json.ok ? 'ok' : 'fail';
+    } catch (err) {
+      results.sheets = 'fail';
+    }
+  }
+
+  // ② HTML 파일 다운로드
+  try {
+    var name = clubName.replace(/\s+/g, '-');
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = name + '-2605-상품페이지.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    results.html = true;
+  } catch (err) {
+    results.html = false;
+  }
+
+  // ③ 결과 모달 표시
+  showResultModal(clubName, webhookUrl, results);
+}
+
+function showResultModal(clubName, webhookUrl, results) {
+  // 기존 모달 제거
+  var old = document.getElementById('resultModal');
+  if (old) old.remove();
+
+  var sheetsMsg = '';
+  if (!webhookUrl) {
+    sheetsMsg = '<div class="rm-row rm-skip"><span>📋 Google Sheets</span><span>URL 미입력 · 건너뜀</span></div>';
+  } else if (results.sheets === 'ok') {
+    sheetsMsg = '<div class="rm-row rm-ok"><span>📊 Google Sheets</span><span>✅ 저장 완료 · Gmail 알림 발송</span></div>';
+  } else {
+    sheetsMsg = '<div class="rm-row rm-fail"><span>📊 Google Sheets</span><span>❌ 전송 실패 · URL 확인 필요</span></div>';
+  }
+
+  var htmlMsg = results.html
+    ? '<div class="rm-row rm-ok"><span>📄 HTML 파일</span><span>✅ 다운로드 완료</span></div>'
+    : '<div class="rm-row rm-fail"><span>📄 HTML 파일</span><span>❌ 생성 실패</span></div>';
+
+  var modal = document.createElement('div');
+  modal.id = 'resultModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(10,20,14,.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:460px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.3);">'
+    + '<div style="background:#1B3A2D;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;">'
+    +   '<div>'
+    +     '<div style="font-family:Noto Serif KR,serif;font-size:17px;font-weight:700;color:#C9A84C;">제출 완료</div>'
+    +     '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;">' + clubName + ' · 2605 시즌</div>'
+    +   '</div>'
+    +   '<button onclick="document.getElementById(\'resultModal\').remove()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>'
+    + '</div>'
+    + '<style>'
+    + '.rm-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #EDE7DC;font-size:13px;}'
+    + '.rm-row:last-child{border-bottom:none;}'
+    + '.rm-row span:first-child{color:#3A3A3A;font-weight:600;}'
+    + '.rm-ok span:last-child{color:#2D6A4F;font-weight:500;}'
+    + '.rm-fail span:last-child{color:#C62828;font-weight:500;}'
+    + '.rm-skip span:last-child{color:#999;}'
+    + '</style>'
+    + '<div style="padding:8px 28px 4px;">' + sheetsMsg + htmlMsg + '</div>'
+    + '<div style="padding:20px 28px 24px;display:flex;gap:10px;justify-content:flex-end;">'
+    +   '<button onclick="document.getElementById(\'resultModal\').remove()" style="padding:10px 20px;border:1.5px solid #EDE7DC;border-radius:8px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:#666;">닫기</button>'
+    +   '<button onclick="openPreview();document.getElementById(\'resultModal\').remove();" style="padding:10px 20px;border:none;border-radius:8px;background:#1B3A2D;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">👁️ 미리보기 열기</button>'
+    + '</div>'
+    + '</div>';
+
+  document.body.appendChild(modal);
 }
 
 function generateFinalHTML() {
-  // ── 데이터 수집 ──────────────────────────
-  const clubName   = v('clubName') || '모임 이름';
-  const season     = v('clubSeason');
-  const price      = v('clubPrice');
-  const firstBook  = v('firstBookTitle') || v('b1title');
-  const day        = v('clubDay');
-  const timeInput  = v('clubTimeInput');
-  const time       = day && timeInput ? `${day} ${timeInput}` : (day || timeInput);
-  const capacity   = v('clubCapacity');
-  const place      = v('clubPlace') || '베이트리 북클럽';
-  const period     = v('clubPeriod');
+  var clubName  = v('clubName') || '모임 이름';
+  var season    = v('clubSeason');
+  var price     = v('clubPrice');
+  var firstBook = v('firstBookTitle') || v('b1title');
+  var day       = v('clubDay');
+  var timeInput = v('clubTimeInput');
+  var time      = (day && timeInput) ? (day + ' ' + timeInput) : (day || timeInput);
+  var capacity  = v('clubCapacity');
+  var place     = v('clubPlace') || '베이트리 북클럽';
+  var period    = v('clubPeriod');
 
-  const isNew      = document.getElementById('itNew').checked;
-  const headline   = v(isNew ? 'clubHeadline' : 'contHeadline') || '';
-  const introBody  = v(isNew ? 'clubIntroText' : 'contIntroText') || '';
+  var isNew     = document.getElementById('itNew').checked;
+  var headline  = v(isNew ? 'clubHeadline' : 'contHeadline') || '';
+  var introBody = v(isNew ? 'clubIntroText' : 'contIntroText') || '';
 
-  const hostRole   = document.querySelector('input[name="hostRole"]:checked').value;
-  const hostName   = v('hostName');
-  const hostFinal  = v('hostFinal') || v('hostWhy') || '';
-  const mateName   = v('mateName');
-  const isMCont    = document.getElementById('mtCont')?.checked;
-  const mateFinal  = v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')) || '';
+  var hostRoleEl = document.querySelector('input[name="hostRole"]:checked');
+  var hostRole  = hostRoleEl ? hostRoleEl.value : 'host';
+  var hostName  = v('hostName');
+  var hostFinal = v('hostFinal') || v('hostWhy') || '';
+  var mateName  = v('mateName');
+  var mtContEl  = document.getElementById('mtCont');
+  var isMCont   = mtContEl && mtContEl.checked;
+  var mateFinal = v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')) || '';
 
-  const isAll      = document.getElementById('bmAll').checked;
-  const bookCount  = isAll ? 4 : 1;
-  const emojis     = ['📗','📙','📕','📘'];
-  const ordinals   = ['1회차','2회차','3회차','4회차'];
-  const books = [];
-  for (let i = 1; i <= bookCount; i++) {
-    const t = v(`b${i}title`); if (!t) continue;
-    books.push({ title: t, author: v(`b${i}author`), reason: v(`b${i}reason`), emoji: emojis[i-1], ord: ordinals[i-1] });
+  var isAll     = document.getElementById('bmAll').checked;
+  var bookCount = isAll ? 4 : 1;
+  var emojis    = ['📗','📙','📕','📘'];
+  var ordinals  = ['1회차','2회차','3회차','4회차'];
+  var books = [];
+  for (var i = 1; i <= bookCount; i++) {
+    var t = v('b' + i + 'title');
+    if (!t) continue;
+    books.push({ title: t, author: v('b'+i+'author'), reason: v('b'+i+'reason'), emoji: emojis[i-1], ord: ordinals[i-1] });
   }
 
-  // ── 섹션 HTML 조각 ────────────────────────
-  const metaItems = [
-    firstBook ? `<div class="meta-item"><span class="meta-label">📖 첫 책</span><span class="meta-val">${firstBook}</span></div>` : '',
-    time      ? `<div class="meta-item"><span class="meta-label">⏰ 시간</span><span class="meta-val">${time}</span></div>` : '',
-    capacity  ? `<div class="meta-item"><span class="meta-label">🙋 인원</span><span class="meta-val">${capacity}</span></div>` : '',
-    price     ? `<div class="meta-item"><span class="meta-label">💰 가격</span><span class="meta-val">${price}</span></div>` : '',
-    place     ? `<div class="meta-item"><span class="meta-label">🏡 장소</span><span class="meta-val">${place}</span></div>` : '',
-    period    ? `<div class="meta-item"><span class="meta-label">📆 멤버십 기간</span><span class="meta-val">${period}</span></div>` : '',
-  ].filter(Boolean).join('');
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function nl(s)  { return (s||'').replace(/\n/g,'<br>'); }
 
-  let hostHTML = '';
-  if ((hostRole === 'host') && hostName) {
-    hostHTML += `
-      <section class="content-section">
-        <h2 class="section-heading">호스트(Host) <strong>${hostName}</strong>님을 소개할게요</h2>
-        <div class="host-card">
-          <div class="host-avatar">🙋</div>
-          <p class="body-text">${hostFinal.replace(/\n/g,'<br>')}</p>
-        </div>
-      </section>`;
+  var metaItems = '';
+  if (firstBook) metaItems += '<div class="mi"><span class="ml">📖 첫 책</span><span class="mv">' + esc(firstBook) + '</span></div>';
+  if (time)      metaItems += '<div class="mi"><span class="ml">⏰ 시간</span><span class="mv">' + esc(time) + '</span></div>';
+  if (capacity)  metaItems += '<div class="mi"><span class="ml">🙋 인원</span><span class="mv">' + esc(capacity) + '</span></div>';
+  if (price)     metaItems += '<div class="mi"><span class="ml">💰 가격</span><span class="mv">' + esc(price) + '</span></div>';
+  if (place)     metaItems += '<div class="mi"><span class="ml">🏡 장소</span><span class="mv">' + esc(place) + '</span></div>';
+  if (period)    metaItems += '<div class="mi"><span class="ml">📆 기간</span><span class="mv">' + esc(period) + '</span></div>';
+
+  var hostHTML = '';
+  if (hostRole === 'host' && hostName) {
+    hostHTML = '<section class="cs"><h2 class="sh">호스트(Host) <strong>' + esc(hostName) + '</strong>님을 소개할게요</h2>'
+      + '<div class="hc"><div class="ha">🙋</div><p class="bt">' + nl(esc(hostFinal)) + '</p></div></section>';
   }
-  if ((hostRole === 'mate') && mateName) {
-    hostHTML += `
-      <section class="content-section">
-        <h2 class="section-heading">메이트(Mate) <strong>${mateName}</strong>님을 소개할게요</h2>
-        <div class="host-card">
-          <div class="host-avatar">🤝</div>
-          <p class="body-text">${mateFinal.replace(/\n/g,'<br>')}</p>
-        </div>
-      </section>`;
+  if (hostRole === 'mate' && mateName) {
+    hostHTML = '<section class="cs"><h2 class="sh">메이트(Mate) <strong>' + esc(mateName) + '</strong>님을 소개할게요</h2>'
+      + '<div class="hc"><div class="ha">🤝</div><p class="bt">' + nl(esc(mateFinal)) + '</p></div></section>';
   }
 
-  const booksHTML = books.length > 0 ? `
-    <section class="content-section">
-      <h2 class="section-heading">우리는 이 책으로 만날게요</h2>
-      <div class="book-list">
-        ${books.map(b => `
-          <div class="book-entry">
-            <div class="book-entry-title">${b.emoji} ${b.ord} : <strong>${b.title}</strong>${b.author ? `<span class="book-author"> — ${b.author}</span>` : ''}</div>
-            <p class="book-entry-body">${(b.reason||'').replace(/\n/g,'<br>')}</p>
-          </div>`).join('')}
-      </div>
-    </section>` : '';
-
-  // ── 완성 HTML ────────────────────────────
-  return `<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${clubName} · 베이트리 북클럽</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-/* ── 리셋 & 기본 ── */
-*{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --green:#1B3A2D;--green-mid:#2D4A3E;
-  --gold:#C9A84C;--gold-light:#E8C97A;
-  --cream:#F8F4EE;--cream-dark:#EDE7DC;
-  --ink:#1A1A1A;--ink-mid:#3A3A3A;--ink-light:#777;
-  --white:#FFFFFF;--radius:14px;
-}
-body{font-family:'Noto Sans KR',sans-serif;background:#F0EBE3;color:var(--ink);min-height:100vh;}
-
-/* ── 비밀번호 게이트 ── */
-#gate{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--green);
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:28px;
-}
-.gate-logo{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:22px;font-weight:700;letter-spacing:0.12em;text-align:center;}
-.gate-sub{color:rgba(255,255,255,0.45);font-size:12px;letter-spacing:0.18em;margin-top:4px;}
-.gate-box{
-  background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.25);
-  border-radius:var(--radius);padding:32px 36px;width:100%;max-width:380px;
-  display:flex;flex-direction:column;gap:14px;
-}
-.gate-box label{color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;letter-spacing:0.08em;}
-.gate-box input{
-  width:100%;padding:12px 16px;border:1.5px solid rgba(201,168,76,0.3);
-  border-radius:8px;background:rgba(255,255,255,0.08);
-  color:var(--white);font-family:'Noto Sans KR',sans-serif;font-size:15px;
-  outline:none;letter-spacing:0.12em;
-}
-.gate-box input:focus{border-color:var(--gold);background:rgba(255,255,255,0.12);}
-.gate-box input::placeholder{color:rgba(255,255,255,0.25);}
-.gate-btn{
-  padding:13px;background:var(--gold);color:var(--green);
-  border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;
-  font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.06em;
-  transition:background 0.2s;
-}
-.gate-btn:hover{background:var(--gold-light);}
-.gate-error{color:#FF8080;font-size:12px;text-align:center;display:none;}
-
-/* ── 컨텐츠 (게이트 통과 후) ── */
-#content{display:none;}
-
-/* ── 헤더 ── */
-.page-header{
-  background:var(--green);padding:20px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,0.18);
-}
-.header-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
-.header-logo-text{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:13px;font-weight:600;letter-spacing:0.1em;}
-.header-logo-sub{display:block;font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.18em;margin-top:1px;}
-.header-season{padding:5px 14px;border-radius:999px;border:1px solid rgba(201,168,76,0.3);color:rgba(255,255,255,0.6);font-size:11px;letter-spacing:0.1em;}
-
-/* ── 히어로 ── */
-.hero{
-  background:var(--green);padding:56px 40px 48px;
-  border-bottom:1px solid rgba(201,168,76,0.15);
-}
-.hero-inner{max-width:780px;margin:0 auto;}
-.hero h1{
-  font-family:'Noto Serif KR',serif;font-size:36px;font-weight:700;
-  color:var(--white);line-height:1.35;margin-bottom:10px;
-}
-.hero-season{color:var(--gold);font-size:13px;font-weight:500;letter-spacing:0.12em;margin-bottom:24px;display:block;}
-.meta-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
-  margin-top:28px;
-}
-.meta-item{
-  background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.15);
-  border-radius:10px;padding:14px 16px;
-}
-.meta-label{display:block;font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;}
-.meta-val{display:block;font-size:14px;font-weight:600;color:var(--white);}
-
-/* ── 본문 ── */
-.page-body{max-width:780px;margin:0 auto;padding:48px 40px 80px;}
-
-.content-section{margin-bottom:48px;}
-.section-heading{
-  font-family:'Noto Serif KR',serif;font-size:21px;font-weight:700;
-  color:var(--ink);margin-bottom:18px;padding-bottom:14px;
-  border-bottom:1.5px solid var(--cream-dark);line-height:1.5;
-}
-.section-heading strong{color:var(--green);}
-.body-text{font-size:15px;line-height:1.95;color:var(--ink-mid);word-break:keep-all;}
-
-/* ── 호스트/메이트 카드 ── */
-.host-card{
-  display:flex;align-items:flex-start;gap:20px;
-  background:var(--cream);border-radius:var(--radius);
-  padding:24px;border:1px solid var(--cream-dark);
-}
-.host-avatar{
-  width:56px;height:56px;border-radius:50%;
-  background:var(--green);display:flex;align-items:center;
-  justify-content:center;font-size:24px;flex-shrink:0;
-}
-
-/* ── 도서 목록 ── */
-.book-list{display:flex;flex-direction:column;gap:0;}
-.book-entry{padding:24px 0;border-bottom:1px solid var(--cream-dark);}
-.book-entry:last-child{border-bottom:none;}
-.book-entry-title{
-  font-size:17px;font-weight:700;color:var(--ink);
-  margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-}
-.book-author{font-size:14px;font-weight:400;color:var(--ink-light);}
-.book-entry-body{font-size:14px;line-height:1.9;color:var(--ink-mid);}
-
-/* ── 운영 안내 카드 ── */
-.info-card{
-  background:var(--white);border-radius:var(--radius);
-  border:1px solid var(--cream-dark);overflow:hidden;margin-bottom:20px;
-}
-.info-card-header{
-  background:var(--cream);padding:16px 24px;
-  border-bottom:1px solid var(--cream-dark);
-  font-size:14px;font-weight:700;color:var(--ink-mid);
-  display:flex;align-items:center;gap:8px;
-}
-.info-card-body{padding:20px 24px;}
-.info-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
-.info-list li{font-size:14px;color:var(--ink-mid);line-height:1.7;padding-left:16px;position:relative;}
-.info-list li::before{content:'·';position:absolute;left:0;color:var(--gold);font-weight:700;font-size:16px;top:-1px;}
-
-/* ── 푸터 ── */
-.page-footer{
-  background:var(--green);padding:32px 40px;
-  text-align:center;
-}
-.page-footer p{color:rgba(255,255,255,0.45);font-size:12px;line-height:2;}
-.page-footer a{color:var(--gold);text-decoration:none;}
-
-/* ── 관리자 배지 ── */
-.admin-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);
-  border-radius:999px;padding:4px 12px;
-  color:var(--gold);font-size:11px;font-weight:700;
-  margin-bottom:24px;letter-spacing:0.08em;
-}
-
-@media(max-width:640px){
-  .hero{padding:36px 20px 32px;}
-  .page-body{padding:32px 20px 60px;}
-  .meta-grid{grid-template-columns:1fr 1fr;}
-  .host-card{flex-direction:column;}
-  .page-header{padding:16px 20px;}
-}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════════════════
-     비밀번호 게이트
-═══════════════════════════ -->
-<div id="gate">
-  <div>
-    <div class="gate-logo">
-      🌳 BAYTREE. BOOKCLUB
-      <span class="gate-sub">MEMBER ACCESS</span>
-    </div>
-  </div>
-  <div class="gate-box">
-    <label>접근 비밀번호</label>
-    <input type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
-    <button class="gate-btn" onclick="checkPw()">입장하기</button>
-    <div class="gate-error" id="gateError">비밀번호가 올바르지 않습니다.</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════
-     메인 콘텐츠
-═══════════════════════════ -->
-<div id="content">
-
-  <!-- 헤더 -->
-  <header class="page-header">
-    <a class="header-logo" href="https://www.baytreebookclub.com" target="_blank">
-      <div class="header-logo-text">
-        BAYTREE. BOOKCLUB
-        <span class="header-logo-sub">www.baytreebookclub.com</span>
-      </div>
-    </a>
-    <span class="header-season">${season || '2605'} 시즌</span>
-  </header>
-
-  <!-- 히어로 -->
-  <div class="hero">
-    <div class="hero-inner">
-      <span class="admin-badge">🔒 관계자 전용 · 미공개 페이지</span>
-      <h1>${clubName}</h1>
-      ${season ? `<span class="hero-season">${season} 시즌 · 베이트리 북클럽</span>` : ''}
-      <div class="meta-grid">${metaItems}</div>
-    </div>
-  </div>
-
-  <!-- 본문 -->
-  <div class="page-body">
-
-    <!-- 모임 소개 -->
-    ${headline ? `
-    <section class="content-section">
-      <h2 class="section-heading">${headline}</h2>
-      <p class="body-text">${introBody.replace(/\n/g,'<br>')}</p>
-    </section>` : ''}
-
-    <!-- 호스트/메이트 -->
-    ${hostHTML}
-
-    <!-- 도서 목록 -->
-    ${booksHTML}
-
-    <!-- 모임 진행 방식 -->
-    <section class="content-section">
-      <div class="info-card">
-        <div class="info-card-header">✅ 모임은 이렇게 진행됩니다</div>
-        <div class="info-card-body">
-          <ul class="info-list">
-            <li>모임 이틀 전 23:59:59까지 책을 읽고, 독서노트를 작성해야 모임에 참석하실 수 있어요.</li>
-            <li>모임 하루 전, 독서노트를 공유하고 멤버들의 질문에 따라 토론해요.</li>
-            <li>독서모임은 3시간 이상 진행됩니다. 이외에도 멤버들과 번개, 뒤풀이를 함께 하실 수 있어요.</li>
-            <li>모임별 단체 카카오톡방을 통해 모임 공지 및 이벤트 소식을 알려드려요.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-header">💝 멤버십 혜택</div>
-        <div class="info-card-body">
-          <ul class="info-list">
-            <li>30개의 독서모임에 놀러가실 수 있어요.</li>
-            <li>라이브러리 이용 무료 (도서 열람 및 대출)</li>
-            <li>다양한 커뮤니티 이벤트를 즐기실 수 있어요.</li>
-            <li>무료 쿠폰 : 다른 독서모임 놀러가기 1회, 게더링 1회, 오픈 세미나 1회</li>
-            ${period ? `<li>${period}까지 멤버십이 유지됩니다.</li>` : ''}
-          </ul>
-        </div>
-      </div>
-    </section>
-
-  </div><!-- /page-body -->
-
-  <!-- 푸터 -->
-  <footer class="page-footer">
-    <p>
-      <a href="https://www.baytreebookclub.com" target="_blank">www.baytreebookclub.com</a><br>
-      부산 부산진구 서전로67번길 6, B1 · 010-5119-2270<br>
-      © 베이트리 북클럽 · 이 페이지는 관계자 전용입니다.
-    </p>
-  </footer>
-
-</div><!-- /content -->
-
-<script>
-// 비밀번호: baytree2605
-const PW_HASH = '${hashPassword('baytree2605')}';
-
-function hashStr(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  var bookRows = '';
+  for (var bi = 0; bi < books.length; bi++) {
+    var b = books[bi];
+    bookRows += '<div class="be"><div class="bet">' + b.emoji + ' ' + b.ord + ' : <strong>' + esc(b.title) + '</strong>'
+      + (b.author ? '<span class="ba"> — ' + esc(b.author) + '</span>' : '') + '</div>'
+      + '<p class="beb">' + nl(esc(b.reason)) + '</p></div>';
   }
-  return h.toString(36);
-}
+  var booksHTML = books.length > 0
+    ? '<section class="cs"><h2 class="sh">우리는 이 책으로 만날게요</h2><div class="bl">' + bookRows + '</div></section>'
+    : '';
 
-function checkPw() {
-  const val = document.getElementById('pwInput').value;
-  if (hashStr(val) === PW_HASH) {
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
-  } else {
-    document.getElementById('gateError').style.display = 'block';
-    document.getElementById('pwInput').value = '';
-    document.getElementById('pwInput').focus();
-  }
-}
+  var introHTML = headline
+    ? '<section class="cs"><h2 class="sh">' + esc(headline) + '</h2><p class="bt">' + nl(esc(introBody)) + '</p></section>'
+    : '';
 
-document.getElementById('pwInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') checkPw();
-});
-</script>
-</body>
-</html>`;
-}
+  var periodLi = period ? '<li>' + esc(period) + '까지 멤버십이 유지됩니다.</li>' : '';
 
-// 비밀번호 해시 (빌드 타임)
-function hashPassword(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-  }
-  return h.toString(36);
+  var SO = '<' + 'script' + '>';
+  var SC = '</' + 'script' + '>';
+
+  var css = [
+    '*{box-sizing:border-box;margin:0;padding:0;}',
+    ':root{--g:#1B3A2D;--gm:#2D4A3E;--gold:#C9A84C;--gl:#E8C97A;--cr:#F8F4EE;--cd:#EDE7DC;--ink:#1A1A1A;--im:#3A3A3A;--il:#777;--w:#FFF;--r:14px;}',
+    'body{font-family:"Noto Sans KR",sans-serif;background:#F0EBE3;color:var(--ink);}',
+    '#gate{position:fixed;inset:0;z-index:9999;background:var(--g);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;}',
+    '.gl2{font-family:"Noto Serif KR",serif;color:var(--gold);font-size:22px;font-weight:700;letter-spacing:.12em;text-align:center;}',
+    '.gs{color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.18em;display:block;margin-top:4px;}',
+    '.gb{background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);padding:32px 36px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;}',
+    '.gb label{color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.08em;}',
+    '.gb input{width:100%;padding:12px 16px;border:1.5px solid rgba(201,168,76,.3);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:15px;outline:none;letter-spacing:.12em;font-family:inherit;}',
+    '.gb input:focus{border-color:var(--gold);}',
+    '.gb input::placeholder{color:rgba(255,255,255,.25);}',
+    '.gbtn{padding:13px;background:var(--gold);color:var(--g);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}',
+    '.gbtn:hover{background:var(--gl);}',
+    '.gerr{color:#FF8080;font-size:12px;text-align:center;display:none;}',
+    '#content{display:none;}',
+    '.ph{background:var(--g);padding:18px 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.18);}',
+    '.phl{text-decoration:none;font-family:"Noto Serif KR",serif;color:var(--gold);font-size:13px;font-weight:600;letter-spacing:.1em;}',
+    '.phl span{display:block;font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.18em;margin-top:1px;font-family:"Noto Sans KR",sans-serif;}',
+    '.phb{padding:5px 14px;border-radius:999px;border:1px solid rgba(201,168,76,.3);color:rgba(255,255,255,.6);font-size:11px;}',
+    '.hero{background:var(--g);padding:52px 40px 44px;}',
+    '.hi{max-width:780px;margin:0 auto;}',
+    '.ab{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:999px;padding:4px 12px;color:var(--gold);font-size:11px;font-weight:700;margin-bottom:20px;letter-spacing:.08em;}',
+    '.hero h1{font-family:"Noto Serif KR",serif;font-size:34px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:8px;}',
+    '.hs2{color:var(--gold);font-size:13px;font-weight:500;letter-spacing:.1em;display:block;margin-bottom:24px;}',
+    '.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}',
+    '.mi{background:rgba(255,255,255,.07);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:13px 15px;}',
+    '.ml{display:block;font-size:11px;color:rgba(255,255,255,.45);margin-bottom:4px;}',
+    '.mv{display:block;font-size:14px;font-weight:600;color:#fff;}',
+    '.pb{max-width:780px;margin:0 auto;padding:48px 40px 80px;}',
+    '.cs{margin-bottom:48px;}',
+    '.sh{font-family:"Noto Serif KR",serif;font-size:21px;font-weight:700;color:var(--ink);margin-bottom:18px;padding-bottom:14px;border-bottom:1.5px solid var(--cd);line-height:1.5;}',
+    '.sh strong{color:var(--g);}',
+    '.bt{font-size:15px;line-height:1.95;color:var(--im);word-break:keep-all;}',
+    '.hc{display:flex;align-items:flex-start;gap:20px;background:var(--cr);border-radius:var(--r);padding:24px;border:1px solid var(--cd);}',
+    '.ha{width:52px;height:52px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}',
+    '.bl{display:flex;flex-direction:column;}',
+    '.be{padding:22px 0;border-bottom:1px solid var(--cd);}',
+    '.be:last-child{border-bottom:none;}',
+    '.bet{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}',
+    '.ba{font-size:14px;font-weight:400;color:var(--il);}',
+    '.beb{font-size:14px;line-height:1.9;color:var(--im);}',
+    '.ic{background:#fff;border-radius:var(--r);border:1px solid var(--cd);overflow:hidden;margin-bottom:16px;}',
+    '.ich{background:var(--cr);padding:14px 22px;border-bottom:1px solid var(--cd);font-size:14px;font-weight:700;color:var(--im);}',
+    '.icb{padding:18px 22px;}',
+    '.il2{list-style:none;display:flex;flex-direction:column;gap:7px;}',
+    '.il2 li{font-size:14px;color:var(--im);line-height:1.7;padding-left:14px;position:relative;}',
+    '.il2 li::before{content:"·";position:absolute;left:0;color:var(--gold);font-weight:700;font-size:16px;top:-1px;}',
+    '.pf{background:var(--g);padding:28px 40px;text-align:center;}',
+    '.pf p{color:rgba(255,255,255,.45);font-size:12px;line-height:2;}',
+    '.pf a{color:var(--gold);text-decoration:none;}',
+    '@media(max-width:640px){.hero{padding:32px 20px 28px;}.pb{padding:28px 20px 60px;}.mg{grid-template-columns:1fr 1fr;}.hc{flex-direction:column;}.ph{padding:14px 20px;}}'
+  ].join('\n');
+
+  var html = '<!DOCTYPE html>\n'
+    + '<html lang="ko">\n<head>\n'
+    + '<meta charset="UTF-8">\n'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    + '<title>' + esc(clubName) + ' · 베이트리 북클럽</title>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    + '<style>' + css + '</style>\n'
+    + '</head>\n<body>\n'
+    + '<div id="gate">'
+    +   '<div class="gl2">🌳 BAYTREE. BOOKCLUB<span class="gs">MEMBER ACCESS ONLY</span></div>'
+    +   '<div class="gb">'
+    +     '<label>접근 비밀번호</label>'
+    +     '<input type="password" id="pwInput" placeholder="••••••">'
+    +     '<button class="gbtn" onclick="checkPw()">입장하기</button>'
+    +     '<div class="gerr" id="gateError">비밀번호가 올바르지 않습니다.</div>'
+    +   '</div>'
+    + '</div>\n'
+    + '<div id="content">\n'
+    + '<header class="ph">'
+    +   '<a class="phl" href="https://www.baytreebookclub.com" target="_blank">BAYTREE. BOOKCLUB<span>www.baytreebookclub.com</span></a>'
+    +   '<span class="phb">' + esc(season || '2605') + ' 시즌</span>'
+    + '</header>\n'
+    + '<div class="hero"><div class="hi">'
+    +   '<span class="ab">🔒 관계자 전용 · 미공개 페이지</span>'
+    +   '<h1>' + esc(clubName) + '</h1>'
+    +   (season ? '<span class="hs2">' + esc(season) + ' 시즌 · 베이트리 북클럽</span>' : '')
+    +   '<div class="mg">' + metaItems + '</div>'
+    + '</div></div>\n'
+    + '<div class="pb">\n'
+    + introHTML
+    + hostHTML
+    + booksHTML
+    + '<section class="cs">'
+    +   '<div class="ic"><div class="ich">✅ 모임은 이렇게 진행됩니다</div><div class="icb"><ul class="il2">'
+    +     '<li>모임 이틀 전 23:59:59까지 책을 읽고, 독서노트를 작성해야 모임에 참석하실 수 있어요.</li>'
+    +     '<li>모임 하루 전, 독서노트를 공유하고 멤버들의 질문에 따라 토론해요.</li>'
+    +     '<li>독서모임은 3시간 이상 진행됩니다. 이외에도 멤버들과 번개, 뒤풀이를 함께 하실 수 있어요.</li>'
+    +     '<li>모임별 단체 카카오톡방을 통해 모임 공지 및 이벤트 소식을 알려드려요.</li>'
+    +   '</ul></div></div>'
+    +   '<div class="ic"><div class="ich">💝 멤버십 혜택</div><div class="icb"><ul class="il2">'
+    +     '<li>30개의 독서모임에 놀러가실 수 있어요.</li>'
+    +     '<li>라이브러리 이용 무료 (도서 열람 및 대출)</li>'
+    +     '<li>다양한 커뮤니티 이벤트를 즐기실 수 있어요.</li>'
+    +     '<li>무료 쿠폰 : 다른 독서모임 놀러가기 1회, 게더링 1회, 오픈 세미나 1회</li>'
+    +     periodLi
+    +   '</ul></div></div>'
+    + '</section>\n'
+    + '</div>\n'
+    + '<footer class="pf"><p>'
+    +   '<a href="https://www.baytreebookclub.com" target="_blank">www.baytreebookclub.com</a><br>'
+    +   '부산 부산진구 서전로67번길 6, B1 · 010-5119-2270<br>'
+    +   '© 베이트리 북클럽 · 이 페이지는 관계자 전용입니다.'
+    + '</p></footer>\n'
+    + '</div>\n'
+    + SO
+    + 'var PW="baytree2605";'
+    + 'function checkPw(){'
+    +   'var val=document.getElementById("pwInput").value;'
+    +   'if(val===PW){'
+    +     'document.getElementById("gate").style.display="none";'
+    +     'document.getElementById("content").style.display="block";'
+    +   '}else{'
+    +     'document.getElementById("gateError").style.display="block";'
+    +     'document.getElementById("pwInput").value="";'
+    +     'document.getElementById("pwInput").focus();'
+    +   '}'
+    + '}'
+    + 'document.getElementById("pwInput").addEventListener("keydown",function(e){if(e.key==="Enter")checkPw();});'
+    + SC + '\n'
+    + '</body>\n</html>';
+
+  return html;
 }
 </script>
 </body>
