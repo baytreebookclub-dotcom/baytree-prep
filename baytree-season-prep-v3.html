@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>베이트리 북클럽 · 시즌 준비 도구</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #1B3A2D;
+    --green-mid: #2D4A3E;
+    --green-light: #3D5A4E;
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --cream: #F8F4EE;
+    --cream-dark: #EDE7DC;
+    --ink: #1A1A1A;
+    --ink-mid: #3A3A3A;
+    --ink-light: #777;
+    --white: #FFFFFF;
+    --border: rgba(201,168,76,0.22);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: #F0EBE3; color: var(--ink); min-height: 100vh; }
+
+  /* ─── HEADER ─── */
+  .site-header {
+    background: var(--green-deep);
+    padding: 0 40px;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-tree { font-size: 22px; }
+  .logo-text { font-family: 'Noto Serif KR', serif; color: var(--gold); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; }
+  .logo-sub { font-size: 10px; color: rgba(255,255,255,0.4); display: block; letter-spacing: 0.15em; font-weight: 300; margin-top: 1px; font-family: 'Noto Sans KR', sans-serif; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-step-indicator { display: flex; align-items: center; gap: 8px; }
+  .hstep { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+  .hstep.active { background: var(--gold); width: 22px; border-radius: 4px; }
+  .hstep.done { background: rgba(201,168,76,0.5); }
+  .header-tag { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border); color: rgba(255,255,255,0.6); font-size: 11px; letter-spacing: 0.08em; }
+
+  /* ─── LAYOUT ─── */
+  .app-body { display: grid; grid-template-columns: 280px 1fr; align-items: start; }
+
+  /* ─── LEFT NAV ─── */
+  .left-nav {
+    background: var(--white);
+    border-right: 1px solid var(--cream-dark);
+    padding: 32px 0;
+    position: sticky;
+    top: 64px;
+    height: auto; max-height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .nav-section { padding: 0 20px; margin-bottom: 28px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: var(--ink-light); letter-spacing: 0.18em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: var(--ink-mid);
+    font-weight: 500;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--cream); }
+  .nav-item.active { background: rgba(27,58,45,0.07); color: var(--green-deep); font-weight: 700; }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: var(--gold); border-radius: 0 2px 2px 0; }
+  .nav-item .nav-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+  .nav-item .nav-check { margin-left: auto; font-size: 12px; color: var(--gold); display: none; }
+  .nav-item.done .nav-check { display: block; }
+  .nav-sub { font-size: 11px; color: var(--ink-light); font-weight: 400; display: block; margin-top: 1px; }
+
+  .nav-divider { border: none; border-top: 1px solid var(--cream-dark); margin: 4px 20px 16px; }
+
+  .preview-trigger-btn {
+    margin: 0 20px 16px;
+    width: calc(100% - 40px);
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--green-deep);
+    border: 1.5px solid var(--green-deep);
+    border-radius: var(--radius-sm);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .preview-trigger-btn:hover { background: rgba(27,58,45,0.06); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main-content { padding: 20px 28px 60px; max-width: 820px; }
+
+  /* ─── SECTION ─── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-hero {
+    background: var(--green-deep);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    display: flex; align-items: flex-start; gap: 20px;
+  }
+  .section-hero-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-hero h2 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+  .section-hero p { color: rgba(255,255,255,0.55); font-size: 12px; line-height: 1.6; }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid rgba(0,0,0,0.05);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header-icon { font-size: 18px; }
+  .card-header h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .card-header p { font-size: 12px; color: var(--ink-light); margin-top: 2px; }
+  .card-body { padding: 24px; }
+
+  /* ─── FORM ─── */
+  .row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row.col2 { grid-template-columns: 1fr 1fr; }
+  .row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .row.col1 { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 12px; font-weight: 700; color: var(--ink-mid);
+    letter-spacing: 0.05em; display: flex; align-items: center; gap: 5px;
+  }
+  .field .req { color: var(--gold); font-size: 10px; }
+  .field .hint { font-size: 11px; color: var(--ink-light); margin-top: -2px; line-height: 1.5; }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-sm);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px; color: var(--ink);
+    background: var(--cream);
+    transition: all 0.2s; outline: none; resize: vertical;
+    line-height: 1.6;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--green-mid);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(45,74,62,0.07);
+  }
+  textarea { min-height: 110px; }
+  textarea.sm { min-height: 80px; }
+  textarea.lg { min-height: 160px; }
+
+  .char-count { font-size: 11px; color: var(--ink-light); text-align: right; }
+
+  /* ─── RADIO PILLS ─── */
+  .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill-option input[type="radio"] { display: none; }
+  .pill-option label {
+    display: flex; align-items: center; gap: 6px;
+    padding: 9px 16px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--ink-mid);
+    background: var(--cream);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .pill-option input:checked + label {
+    border-color: var(--green-deep);
+    background: rgba(27,58,45,0.07);
+    color: var(--green-deep);
+    font-weight: 700;
+  }
+
+  /* ─── BOOK BLOCK ─── */
+  .book-block {
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .book-block-header {
+    background: var(--cream);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .book-round {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--green-deep); color: var(--gold);
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-family: 'Noto Serif KR', serif;
+  }
+  .book-block-header span { font-size: 13px; font-weight: 700; color: var(--ink-mid); }
+  .book-block-body { padding: 20px; }
+
+  /* ─── AI ACTIONS ─── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+    padding: 7px 14px;
+    background: var(--gold); color: var(--green-deep);
+    border: none; border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+    padding: 7px 14px;
+    background: transparent; color: var(--ink-light);
+    border: 1px solid var(--cream-dark); border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; cursor: pointer;
+  }
+
+  /* ─── NAV ─── */
+  .section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--cream-dark); }
+  .btn { padding: 12px 24px; border-radius: var(--radius-sm); font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-primary { background: var(--green-deep); color: var(--white); }
+  .btn-primary:hover { background: var(--green-mid); box-shadow: 0 4px 14px rgba(27,58,45,0.22); }
+  .btn-secondary { background: transparent; color: var(--ink-mid); border: 1.5px solid var(--cream-dark); }
+  .btn-secondary:hover { border-color: var(--green-mid); color: var(--green-deep); }
+  .btn-gold { background: var(--gold); color: var(--green-deep); }
+  .btn-gold:hover { background: var(--gold-light); }
+
+  /* ─── SEPARATOR ─── */
+  .sep { border: none; border-top: 1px solid var(--cream-dark); margin: 24px 0; }
+  .sub-label {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(201,168,76,0.12);
+    font-size: 11px; color: #8A6A20; font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  /* ─── PREVIEW OVERLAY ─── */
+  .preview-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(10,20,14,0.7);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 32px 16px;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+  }
+  .preview-overlay.show { display: flex; }
+  .preview-modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    width: 100%; max-width: 780px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .preview-modal-header {
+    background: var(--green-deep);
+    padding: 24px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preview-modal-header h2 { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: var(--gold); }
+  .preview-modal-header p { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .preview-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none; color: var(--white); font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .preview-body { padding: 0; }
+
+  /* 실제 상품 페이지 스타일 미리보기 */
+  .product-preview { padding: 36px 40px; }
+  .product-preview h1 { font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 700; color: var(--ink); margin-bottom: 20px; line-height: 1.4; }
+
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--cream); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 32px; }
+  .meta-item { font-size: 14px; color: var(--ink-mid); line-height: 1.6; }
+  .meta-item strong { color: var(--ink); }
+
+  .pp-section { margin-bottom: 40px; }
+  .pp-section h2 { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1.5px solid var(--cream-dark); }
+  .pp-section .body-text { font-size: 15px; line-height: 1.9; color: var(--ink-mid); white-space: pre-wrap; word-break: keep-all; }
+
+  .host-card { display: flex; gap: 20px; background: var(--cream); border-radius: var(--radius-sm); padding: 20px; }
+  .host-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .host-card .body-text { font-size: 14px; line-height: 1.85; color: var(--ink-mid); }
+
+  .book-list { display: flex; flex-direction: column; gap: 24px; }
+  .book-entry { padding-bottom: 24px; border-bottom: 1px solid var(--cream-dark); }
+  .book-entry:last-child { border-bottom: none; padding-bottom: 0; }
+  .book-entry-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .book-entry-body { font-size: 14px; line-height: 1.85; color: var(--ink-mid); }
+
+  .schedule-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .schedule-list li { font-size: 14px; color: var(--ink-mid); padding: 10px 14px; background: var(--cream); border-radius: 6px; display: flex; align-items: center; gap: 8px; }
+  .schedule-list li::before { content: '📅'; }
+
+  .preview-modal-footer { padding: 20px 40px; background: var(--cream); border-top: 1px solid var(--cream-dark); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green-deep); color: var(--white);
+    padding: 12px 22px; border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    transition: transform 0.3s; z-index: 999;
+    pointer-events: none; border: 1px solid rgba(201,168,76,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── OPERATIONS INFO ─── */
+  .ops-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ops-block { background: var(--cream); border-radius: var(--radius-sm); padding: 18px; }
+  .ops-block h4 { font-size: 13px; font-weight: 700; color: var(--ink-mid); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .ops-block ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .ops-block li { font-size: 12px; color: var(--ink-light); line-height: 1.6; padding-left: 12px; position: relative; }
+  .ops-block li::before { content: '·'; position: absolute; left: 0; color: var(--gold); font-weight: 700; }
+
+  @media (max-width: 900px) {
+    .app-body { grid-template-columns: 1fr; }
+    .left-nav { position: relative; top: 0; height: auto; display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; }
+    .nav-section { width: auto; flex: 1; min-width: 140px; }
+    .main-content { padding: 20px 16px 60px; }
+    .row.col2, .row.col3 { grid-template-columns: 1fr; }
+    .ops-grid { grid-template-columns: 1fr; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .preview-modal-footer { flex-direction: column; }
+  }
+
+  /* ─── 저장 기능 ─── */
+  .save-bar {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .btn-save {
+    width: 100%; padding: 10px;
+    background: var(--green-deep); color: var(--gold);
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background 0.2s;
+  }
+  .btn-save:hover { background: var(--green-mid); }
+  .btn-load {
+    width: 100%; padding: 8px;
+    background: transparent; color: var(--ink-mid);
+    border: 1.5px solid var(--cream-dark); border-radius: var(--radius-sm);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: all 0.2s;
+  }
+  .btn-load:hover { border-color: var(--green-deep); color: var(--green-deep); }
+  .save-status {
+    font-size: 10px; color: var(--ink-light);
+    text-align: center; min-height: 14px; line-height: 1.4;
+  }
+  .save-status.saved { color: #2D6A4F; }
+  .save-status.unsaved { color: var(--gold); }
+
+  /* ─── 맞춤법 검사 ─── */
+  .spell-wrap { position: relative; }
+  .btn-spell {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; margin-top: 6px;
+    background: transparent; color: var(--green-deep);
+    border: 1.5px solid var(--green-deep); border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 11px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-spell:hover { background: rgba(27,58,45,0.06); }
+  .btn-spell:disabled { opacity: 0.4; cursor: wait; }
+  .spell-result {
+    margin-top: 8px; padding: 12px 14px;
+    border-radius: var(--radius-sm); font-size: 13px; line-height: 1.8;
+    display: none; white-space: pre-wrap; word-break: keep-all;
+  }
+  .spell-result.show { display: block; }
+  .spell-result.ok { background: #F0FAF4; border: 1px solid #A8D5B5; color: #1B5E2D; }
+  .spell-result.has-error { background: #FFF8F0; border: 1px solid #F5C28A; color: #5D3A00; }
+  .spell-error { background: #FDEFC8; border-radius: 3px; padding: 0 2px; }
+  .spell-correct { color: var(--green-deep); font-weight: 700; }
+  .spell-apply-btn {
+    margin-top: 8px; padding: 7px 14px;
+    background: var(--gold); color: var(--green-deep);
+    border: none; border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .spell-apply-btn:hover { background: var(--gold-light); }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header class="site-header">
+  <a class="logo" href="#">
+    <span class="logo-tree">🌳</span>
+    <div class="logo-text">
+      BAYTREE. BOOKCLUB
+      <span class="logo-sub">SEASON PREP TOOL</span>
+    </div>
+  </a>
+  <div class="header-right">
+    <div class="header-step-indicator">
+      <div class="hstep active" id="hs1"></div>
+      <div class="hstep" id="hs2"></div>
+      <div class="hstep" id="hs3"></div>
+      <div class="hstep" id="hs4"></div>
+    </div>
+    <div class="header-tag">5월 시즌 준비</div>
+  </div>
+</header>
+
+<!-- ─── APP BODY ─── -->
+<div class="app-body">
+
+  <!-- LEFT NAV -->
+  <nav class="left-nav">
+    <div class="nav-section">
+      <div class="nav-label">작성 단계</div>
+      <div class="nav-item active" id="nav1" onclick="goSection(1)">
+        <span class="nav-icon">📝</span>
+        <span>
+          모임 기본 정보
+          <span class="nav-sub">모임명, 일정, 인원</span>
+        </span>
+        <span class="nav-check">✓</span>
+      </div>
+      <div class="nav-item" id="nav2" onclick="goSection(2)">
+        <span class="nav-icon">✍️</span>
+        <span>
+          모임 소개글
+          <span class="nav-sub">신규 · 이어지는</span>
+        </span>
+        <span class="nav-check">✓</span>
+      </div>
+      <div class="nav-item" id="nav3" onclick="goSection(3)">
+        <span class="nav-icon">🙋</span>
+        <span>
+          호스트 · 메이트
+          <span class="nav-sub">진행자 소개글</span>
+        </span>
+        <span class="nav-check">✓</span>
+      </div>
+      <div class="nav-item" id="nav4" onclick="goSection(4)">
+        <span class="nav-icon">📚</span>
+        <span>
+          도서 선정
+          <span class="nav-sub">첫 책 · 4권 시즌</span>
+        </span>
+        <span class="nav-check">✓</span>
+      </div>
+    </div>
+    <hr class="nav-divider" style="display:none;">
+    <div style="display:none;">
+      <div class="nav-label" style="margin-bottom:8px;">⚙️ Google Sheets 연동</div>
+      <input type="text" id="webhookUrl"
+        value="https://script.google.com/macros/s/AKfycbx_kC_USku-KtV8txSQ__I3eJupNj-Gpsdrwn9RO2wVwZ6fHVtlo9umsI0ZSp2yyL_XAw/exec"
+        placeholder="Apps Script 웹 앱 URL"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-size:11px;font-family:'Noto Sans KR',sans-serif;background:var(--cream);color:var(--ink);outline:none;margin-bottom:6px;"
+        onfocus="this.style.borderColor='var(--green-mid)'"
+        onblur="this.style.borderColor='var(--cream-dark)'"
+      >
+      <div style="font-size:10px;color:var(--ink-light);line-height:1.6;">
+        URL 입력 시 제출할 때 Sheets에 자동 저장 + Gmail 알림이 발송됩니다.
+      </div>
+    </div>
+    <div class="save-bar">
+      <button class="btn-save" onclick="saveProgress()">💾 작성 내용 저장</button>
+      <button class="btn-load" onclick="loadProgress()">📂 저장된 내용 불러오기</button>
+      <button class="btn-load" onclick="openPreview()" style="color:var(--green-deep);border-color:var(--green-deep);">👁️ 상품 페이지 미리보기</button>
+      <div class="save-status" id="saveStatus">–</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- ══════════════════════════════
+         SECTION 1 · 기본 정보
+    ══════════════════════════════ -->
+    <div class="section active" id="sec1">
+      <div class="section-hero">
+        <div class="section-hero-num">1</div>
+        <div>
+          <h2>모임 기본 정보</h2>
+          <p>상품 페이지 상단에 표시되는 핵심 정보입니다.<br>모임명, 가격, 날짜, 시간, 인원, 장소를 입력해주세요.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-header-icon">📋</span>
+          <div>
+            <h3>모임 기본 정보</h3>
+            <p>상품 페이지에 표시되는 핵심 정보</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row col2">
+            <div class="field">
+              <label>모임 이름 <span class="req">필수</span></label>
+              <input type="text" id="clubName" placeholder="예: 터닝 포인트, 재즈프레소, 북씨네" oninput="markDone(1)">
+            </div>
+            <div class="field">
+              <label>시즌 코드</label>
+              <input type="text" id="clubSeason" value="2605" readonly style="background:var(--cream-dark);color:var(--ink-light);cursor:default;">
+            </div>
+          </div>
+          <div class="row col3">
+            <div class="field">
+              <label>모임 성격</label>
+              <select id="clubType">
+                <option value="">선택</option>
+                <option>인문학</option>
+                <option>문학</option>
+                <option>예술·문화·음악</option>
+                <option>투자·경영</option>
+                <option>과학·철학</option>
+                <option>영화·미디어</option>
+                <option>에세이·글쓰기</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>멤버십 가격</label>
+              <select id="clubPrice">
+                <option value="">선택</option>
+                <option value="170,000원">170,000원</option>
+                <option value="190,000원">190,000원</option>
+                <option value="250,000원">250,000원</option>
+                <option value="270,000원">270,000원</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>첫 책 제목</label>
+              <input type="text" id="firstBookTitle" placeholder="예: 먼저 온 미래">
+            </div>
+          </div>
+          <div class="row col2">
+            <div class="field">
+              <label>요일</label>
+              <select id="clubDay">
+                <option value="">선택</option>
+                <option>월요일</option>
+                <option>화요일</option>
+                <option>수요일</option>
+                <option>목요일</option>
+                <option>금요일</option>
+                <option>토요일</option>
+                <option>일요일</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>시간</label>
+              <input type="text" id="clubTimeInput" placeholder="예: 19:40 - 22:40">
+            </div>
+          </div>
+          <div class="field">
+            <label>모임 인원</label>
+            <input type="text" id="clubCapacity" placeholder="예: 최소 7명 - 최대 14명">
+          </div>
+          <div style="margin-bottom:16px; padding:8px 12px; background:rgba(201,168,76,0.08); border-radius:6px; border-left:2px solid var(--gold);">
+            <span style="font-size:12px; color:#8A6A20;">💡 회차별 날짜는 베이트리 일꾼과 전체 일정을 조율합니다</span>
+          </div>
+          <div class="row col2">
+            <div class="field">
+              <label>장소</label>
+              <input type="text" id="clubPlace" value="베이트리 북클럽">
+            </div>
+            <div class="field">
+              <label>멤버십 유효 기간</label>
+              <input type="text" id="clubPeriod" value="2026년 5월 1일 - 8월 31일" readonly style="background:var(--cream-dark);color:var(--ink-light);cursor:default;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <div></div>
+        <button class="btn btn-primary" onclick="goSection(2)">다음 · 모임 소개글 →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SECTION 2 · 모임 소개글
+    ══════════════════════════════ -->
+    <div class="section" id="sec2">
+      <div class="section-hero">
+        <div class="section-hero-num">2</div>
+        <div>
+          <h2>모임 소개글</h2>
+          <p>"AI시대, 일의 방향을 다시 묻습니다"처럼 — 모임을 한 문장으로 정의하고,<br>왜 이 모임인지를 독자에게 전달하는 소개글을 만들어요.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-header-icon">🔀</span>
+          <div><h3>소개글 유형</h3></div>
+        </div>
+        <div class="card-body">
+          <div class="pill-group">
+            <div class="pill-option">
+              <input type="radio" name="introType" id="itNew" value="new" checked onchange="toggleIntroType()">
+              <label for="itNew">🌱 신규 모임</label>
+            </div>
+            <div class="pill-option">
+              <input type="radio" name="introType" id="itCont" value="continue" onchange="toggleIntroType()">
+              <label for="itCont">🔄 이어지는 모임</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 신규 -->
+      <div id="introNewBlock">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-icon">💭</span>
+            <div>
+              <h3>모임의 핵심 질문</h3>
+              <p>상품 페이지 H2 제목 — 독자를 멈추게 하는 한 문장</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="field" style="margin-bottom:14px;">
+              <label>이 모임의 핵심 질문 / 카피라이팅 제목</label>
+              <input type="text" id="clubHeadline" placeholder="예: AI시대, 일의 방향을 다시 묻습니다 / 재즈처럼, 우리도 즉흥적으로">
+              <div class="hint">→ 홈페이지 H2 태그에 들어가는 굵은 제목입니다</div>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>모임 소개 본문</label>
+              <textarea class="lg" id="clubIntroText" placeholder="이 모임이 왜 필요한지, 어떤 사람들을 위한 모임인지, 함께 무엇을 나눌지를 3~5문장으로 적어보세요." oninput="countChars(this,'introCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('clubIntroText', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_clubIntroText"></div>
+            </div>
+              <div class="char-count" id="introCount">0자</div>
+            </div>
+            <div class="row col2">
+              <div class="field">
+                <label>이런 사람에게 추천</label>
+                <textarea class="sm" id="clubTarget" placeholder="예: AI 시대를 살아가는 직장인, 프리랜서, 창작자…"></textarea>
+              </div>
+              <div class="field">
+                <label>함께 나누고 싶은 것</label>
+                <textarea class="sm" id="clubShare" placeholder="예: 각자의 경험과 생각, 나만의 속도와 길…"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이어지는 -->
+      <div id="introContBlock" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-icon">🔄</span>
+            <div><h3>이어지는 모임 정보</h3></div>
+          </div>
+          <div class="card-body">
+            <div class="field" style="margin-bottom:14px;">
+              <label>이번 시즌 핵심 질문 / 제목</label>
+              <input type="text" id="contHeadline" placeholder="예: 다시, 경영을 묻는다">
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>지난 시즌 분위기 · 기억에 남는 순간</label>
+              <textarea class="sm" id="contLastSeason" placeholder="지난 시즌 가장 뜨거웠던 토론, 멤버들이 남긴 말…"></textarea>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>이번 시즌 소개 본문</label>
+              <textarea class="lg" id="contIntroText" placeholder="지난 시즌을 이어받아 이번엔 어떤 방향으로 나아가는지…" oninput="countChars(this,'contCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('contIntroText', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_contIntroText"></div>
+            </div>
+              <div class="char-count" id="contCount">0자</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="goSection(1)">← 이전</button>
+        <button class="btn btn-primary" onclick="goSection(3)">다음 · 진행자 소개 →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SECTION 3 · 호스트·메이트
+    ══════════════════════════════ -->
+    <div class="section" id="sec3">
+      <div class="section-hero">
+        <div class="section-hero-num">3</div>
+        <div>
+          <h2>호스트 · 메이트 소개글</h2>
+          <p>"메이트 은주님을 소개할게요" — 진행자의 고민과 철학이 담긴 1인칭 소개글을 만들어요.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-header-icon">🎭</span>
+          <div><h3>진행자 구성</h3></div>
+        </div>
+        <div class="card-body">
+          <div class="pill-group">
+            <div class="pill-option">
+              <input type="radio" name="hostRole" id="hrHost" value="host" checked onchange="toggleHostRole()">
+              <label for="hrHost">🎙️ 호스트만</label>
+            </div>
+            <div class="pill-option">
+              <input type="radio" name="hostRole" id="hrMate" value="mate" onchange="toggleHostRole()">
+              <label for="hrMate">🤝 메이트만</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOST -->
+      <div id="hostBlock">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-icon">🎙️</span>
+            <div>
+              <h3>호스트 소개</h3>
+              <p>신규·이어지는 중 선택</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="pill-group" style="margin-bottom:18px;">
+              <div class="pill-option">
+                <input type="radio" name="hostType" id="htNew" value="new" checked onchange="toggleHostType()">
+                <label for="htNew">🌱 신규 호스트</label>
+              </div>
+              <div class="pill-option">
+                <input type="radio" name="hostType" id="htCont" value="continue" onchange="toggleHostType()">
+                <label for="htCont">🔄 이어지는 호스트</label>
+              </div>
+            </div>
+            <div class="row col2">
+              <div class="field">
+                <label>이름 / 닉네임</label>
+                <input type="text" id="hostName" placeholder="예: 재근, 어쩌다호스트">
+              </div>
+              <div class="field">
+                <label>직업 · 배경 (선택)</label>
+                <input type="text" id="hostBg" placeholder="예: 북클럽 운영자, 5년 차 직장인">
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>요즘 가장 큰 고민 · 이 모임을 시작하는 이유</label>
+              <textarea id="hostWhy" placeholder="예: 요즘 제 가장 큰 고민은 '앞으로 나는 어떤 일을 할 수 있을까?'입니다…" oninput="countChars(this,'hostWhyCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('hostWhy', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_hostWhy"></div>
+            </div>
+              <div class="char-count" id="hostWhyCount">0자</div>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>책 읽는 방식 · 독서와의 관계</label>
+              <textarea class="sm" id="hostReading" placeholder="고민이 생기면 자연스레 책을 펼칩니다…"></textarea>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label>멤버들에게 전하고 싶은 말</label>
+              <textarea class="sm" id="hostWish" placeholder="비슷한 고민을 가진 사람들과 함께 읽고 사유하며…"></textarea>
+            </div>
+            <!-- 이어지는 호스트 추가 -->
+            <div id="hostContExtra" style="display:none;">
+              <div class="field">
+                <label>지난 시즌 진행 소감</label>
+                <textarea class="sm" id="hostLastFeel" placeholder="함께 읽으면서 달라진 것, 기억에 남는 순간…"></textarea>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:16px;">
+              <label>소개글 직접 작성</label>
+              <textarea class="lg" id="hostFinal" placeholder="이 모임을 함께 하고 싶은 이유, 요즘의 고민, 멤버들에게 전하고 싶은 말을 자유롭게 적어주세요…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('hostFinal', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_hostFinal"></div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATE -->
+      <div id="mateBlock" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-icon">🤝</span>
+            <div><h3>메이트 소개</h3></div>
+          </div>
+          <div class="card-body">
+
+            <!-- 신규/이어지는 분기 -->
+            <div class="pill-group" style="margin-bottom:18px;">
+              <div class="pill-option">
+                <input type="radio" name="mateType" id="mtNew" value="new" checked onchange="toggleMateType()">
+                <label for="mtNew">🌱 신규 메이트</label>
+              </div>
+              <div class="pill-option">
+                <input type="radio" name="mateType" id="mtCont" value="continue" onchange="toggleMateType()">
+                <label for="mtCont">🔄 이어지는 메이트</label>
+              </div>
+            </div>
+
+            <div class="row col2">
+              <div class="field">
+                <label>이름 / 닉네임</label>
+                <input type="text" id="mateName" placeholder="예: 은주, 조용한독자">
+              </div>
+              <div class="field">
+                <label>합류 이유</label>
+                <input type="text" id="mateJoin" placeholder="예: 재즈와 책 둘 다 좋아서">
+              </div>
+            </div>
+
+            <!-- 신규 전용 -->
+            <div id="mateNewFields">
+              <div class="field" style="margin-bottom:14px;">
+                <label>요즘의 고민</label>
+                <textarea id="mateWhy" placeholder="요즘 제 가장 큰 고민은… (1인칭으로 솔직하게)" oninput="countChars(this,'mateWhyCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateWhy', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateWhy"></div>
+            </div>
+                <div class="char-count" id="mateWhyCount">0자</div>
+              </div>
+              <div class="field" style="margin-bottom:14px;">
+                <label>멤버들에게 전하고 싶은 말</label>
+                <textarea class="sm" id="mateWish" placeholder="비슷한 고민을 가진 분들과 함께 읽고 싶어서…"></textarea>
+              </div>
+            </div>
+
+            <!-- 이어지는 전용 -->
+            <div id="mateContFields" style="display:none;">
+              <div class="field" style="margin-bottom:14px;">
+                <label>요즘의 고민</label>
+                <textarea id="mateWhyCont" placeholder="이번 시즌에도 고민이 이어지고 있어요… (1인칭으로)" oninput="countChars(this,'mateWhyContCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateWhyCont', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateWhyCont"></div>
+            </div>
+                <div class="char-count" id="mateWhyContCount">0자</div>
+              </div>
+              <div class="field" style="margin-bottom:14px;">
+                <label>독서모임을 하면서 느낀 점</label>
+                <textarea id="mateContFeel" placeholder="지난 시즌 함께 읽으면서 달라진 것, 기억에 남는 순간, 멤버들에게 배운 것…" oninput="countChars(this,'mateContFeelCount')"></textarea>
+                <div class="char-count" id="mateContFeelCount">0자</div>
+              </div>
+              <div class="field" style="margin-bottom:14px;">
+                <label>이번 시즌 멤버들에게 전하고 싶은 말</label>
+                <textarea class="sm" id="mateContWish" placeholder="다시 한 번 함께 읽게 되어 기대되는 것…"></textarea>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:16px;">
+              <label>최종 소개글</label>
+              <textarea class="lg" id="mateFinal" placeholder="이 모임을 함께 하고 싶은 이유, 요즘의 고민, 멤버들에게 전하고 싶은 말을 자유롭게 적어주세요…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateFinal', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateFinal"></div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="goSection(2)">← 이전</button>
+        <button class="btn btn-primary" onclick="goSection(4)">다음 · 도서 선정 →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SECTION 4 · 도서 선정
+    ══════════════════════════════ -->
+    <div class="section" id="sec4">
+      <div class="section-hero">
+        <div class="section-hero-num">4</div>
+        <div>
+          <h2>함께 읽을 책</h2>
+          <p>📗📙📕 이모지와 함께 — 회차별 도서와 선정 이유를 작성해요.<br>선정 이유는 독자가 이 책을 읽고 싶게 만드는 짧은 설득입니다.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-header-icon">🎯</span>
+          <div><h3>선정 방식 & 시즌 테마</h3></div>
+        </div>
+        <div class="card-body">
+          <div class="pill-group" style="margin-bottom:16px;">
+            <div class="pill-option">
+              <input type="radio" name="bookMode" id="bmFirst" value="first" checked onchange="toggleBookMode()">
+              <label for="bmFirst">📖 첫 책만 선정</label>
+            </div>
+            <div class="pill-option">
+              <input type="radio" name="bookMode" id="bmAll" value="all" onchange="toggleBookMode()">
+              <label for="bmAll">📚 4권 모두 선정</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>시즌 테마 · 큐레이션 방향</label>
+            <input type="text" id="seasonTheme" placeholder="예: AI 시대의 일과 삶, 경계에 선 존재들">
+            <div class="hint">4권을 묶는 큰 테마가 있다면 적어주세요. 4권을 묶는 큰 주제가 있다면 적어주세요.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1회차 -->
+      <div class="book-block">
+        <div class="book-block-header">
+          <div class="book-round">1</div>
+          <span>📗 1회차 도서</span>
+        </div>
+        <div class="book-block-body">
+          <div class="row col2">
+            <div class="field">
+              <label>책 제목 <span class="req">필수</span></label>
+              <input type="text" id="b1title" placeholder="예: 넥서스">
+            </div>
+            <div class="field">
+              <label>저자</label>
+              <input type="text" id="b1author" placeholder="예: 유발 하라리">
+            </div>
+          </div>
+          <div class="field">
+            <label>선정 이유</label>
+            <textarea id="b1reason" placeholder="이 시대의 현자 유발 하라리는 '정보와 네트워크'라는 관점으로…" oninput="countChars(this,'b1rc')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b1reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b1reason"></div>
+            </div>
+            <div class="char-count" id="b1rc">0자</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2~4회차 -->
+      <div id="books234">
+        <div class="book-block">
+          <div class="book-block-header">
+            <div class="book-round">2</div>
+            <span>📙 2회차 도서</span>
+          </div>
+          <div class="book-block-body">
+            <div class="row col2">
+              <div class="field"><label>책 제목</label><input type="text" id="b2title" placeholder="예: 불안사회"></div>
+              <div class="field"><label>저자</label><input type="text" id="b2author" placeholder="예: 한병철"></div>
+            </div>
+            <div class="field">
+              <label>선정 이유</label>
+              <textarea id="b2reason" placeholder="우리는 왜 이렇게 일하게 되었을까요?…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b2reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b2reason"></div>
+            </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="book-block">
+          <div class="book-block-header">
+            <div class="book-round">3</div>
+            <span>📕 3회차 도서</span>
+          </div>
+          <div class="book-block-body">
+            <div class="row col2">
+              <div class="field"><label>책 제목</label><input type="text" id="b3title" placeholder="예: 생각에 관한 생각"></div>
+              <div class="field"><label>저자</label><input type="text" id="b3author" placeholder="예: 대니얼 카너먼"></div>
+            </div>
+            <div class="field">
+              <label>선정 이유</label>
+              <textarea id="b3reason" placeholder="앞선 책들을 통해 우리는 노동과 기술, 사회 구조의 변화를…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b3reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b3reason"></div>
+            </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="book-block">
+          <div class="book-block-header">
+            <div class="book-round">4</div>
+            <span>📘 4회차 도서 <span style="font-size:11px;color:var(--ink-light);font-weight:400;">(또는 멤버와 협의)</span></span>
+          </div>
+          <div class="book-block-body">
+            <div class="row col2">
+              <div class="field"><label>책 제목</label><input type="text" id="b4title" placeholder="미정이면 비워두세요"></div>
+              <div class="field"><label>저자</label><input type="text" id="b4author" placeholder="저자"></div>
+            </div>
+            <div class="field">
+              <label>선정 이유 / 협의 안내</label>
+              <textarea id="b4reason" placeholder="*이후의 책은 멤버들과 협의하여 정합니다." style="min-height:80px;"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b4reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b4reason"></div>
+            </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 운영 안내 (고정) -->
+      <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+          <span class="card-header-icon">⚙️</span>
+          <div><h3>운영 안내 (고정 항목)</h3><p>모든 상품 페이지에 공통 포함됩니다</p></div>
+        </div>
+        <div class="card-body">
+          <div class="ops-grid">
+            <div class="ops-block">
+              <h4>✅ 모임 진행 방식</h4>
+              <ul>
+                <li>모임 이틀 전 23:59:59까지 독서노트 작성</li>
+                <li>모임 하루 전, 독서노트 공유 후 토론</li>
+                <li>독서모임 3시간 이상 진행</li>
+                <li>모임별 단체 카카오톡방 운영</li>
+              </ul>
+            </div>
+            <div class="ops-block">
+              <h4>💝 멤버십 혜택</h4>
+              <ul>
+                <li>30개 독서모임 놀러가기</li>
+                <li>라이브러리 이용 무료</li>
+                <li>다양한 커뮤니티 이벤트</li>
+                <li>무료 쿠폰: 놀러가기 1회, 게더링 1회, 오픈 세미나 1회</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="goSection(3)">← 이전</button>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="openPreview()">👁️ 미리보기</button>
+          <button class="btn btn-gold" onclick="submitPage()" style="padding:12px 28px;font-size:15px;letter-spacing:0.04em;">
+            ✅ 작성 완료 · HTML 생성
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════
+     PREVIEW OVERLAY
+══════════════════════ -->
+<div class="preview-overlay" id="previewOverlay" onclick="closePreviewOutside(event)">
+  <div class="preview-modal">
+    <div class="preview-modal-header">
+      <div>
+        <h2>상품 페이지 미리보기</h2>
+        <p>baytreebookclub.com/shop_view 스타일</p>
+      </div>
+      <button class="preview-close" onclick="closePreview()">×</button>
+    </div>
+    <div class="preview-body">
+      <div class="product-preview" id="productPreviewContent">
+        <!-- 동적 생성 -->
+      </div>
+    </div>
+    <div class="preview-modal-footer">
+      <button class="btn btn-secondary" onclick="closePreview()">닫기</button>
+      <button class="btn btn-gold" onclick="submitPage()">✅ HTML 생성 · 다운로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════ NAV ══════════
+let currentSec = 1;
+const doneMap = { 1: false, 2: false, 3: false, 4: false };
+
+function goSection(n) {
+  document.getElementById(`sec${currentSec}`).classList.remove('active');
+  document.getElementById(`nav${currentSec}`).classList.remove('active');
+  currentSec = n;
+  document.getElementById(`sec${n}`).classList.add('active');
+  document.getElementById(`nav${n}`).classList.add('active');
+  updateHeaderSteps();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function markDone(n) {
+  doneMap[n] = true;
+  document.getElementById(`nav${n}`).classList.add('done');
+}
+
+function updateHeaderSteps() {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`hs${i}`);
+    el.classList.remove('active', 'done');
+    if (i < currentSec) el.classList.add('done');
+    else if (i === currentSec) el.classList.add('active');
+  }
+}
+
+// ══════════ TOGGLES ══════════
+function toggleIntroType() {
+  const isNew = document.getElementById('itNew').checked;
+  document.getElementById('introNewBlock').style.display = isNew ? '' : 'none';
+  document.getElementById('introContBlock').style.display = isNew ? 'none' : '';
+}
+
+function toggleHostRole() {
+  const val = document.querySelector('input[name="hostRole"]:checked').value;
+  document.getElementById('hostBlock').style.display = (val === 'host') ? '' : 'none';
+  document.getElementById('mateBlock').style.display = (val === 'mate') ? '' : 'none';
+}
+
+function toggleHostType() {
+  const isCont = document.getElementById('htCont').checked;
+  document.getElementById('hostContExtra').style.display = isCont ? '' : 'none';
+}
+
+function toggleMateType() {
+  const isNew = document.getElementById('mtNew').checked;
+  document.getElementById('mateNewFields').style.display = isNew ? '' : 'none';
+  document.getElementById('mateContFields').style.display = isNew ? 'none' : '';
+}
+
+function toggleBookMode() {
+  const isAll = document.getElementById('bmAll').checked;
+  document.getElementById('books234').style.display = isAll ? '' : 'none';
+}
+
+// ══════════ CHAR COUNT ══════════
+function countChars(el, id) {
+  document.getElementById(id).textContent = el.value.length + '자';
+  markDone(currentSec);
+}
+
+// ══════════ HELPERS ══════════
+function v(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+
+
+
+
+
+
+// ══════════ 저장 기능 ══════════
+var SAVE_KEY = 'baytree_prep_2605';
+var autoSaveTimer = null;
+
+// 저장할 필드 목록
+var SAVE_FIELDS = [
+  'clubName','clubSeason','clubPrice','clubDay','clubTimeInput','clubCapacity','clubPlace','clubPeriod','clubType',
+  'clubHeadline','clubIntroText','contHeadline','contLastSeason','contIntroText',
+  'hostWhy','hostFinal','mateWhy','mateWhyCont','mateFinal',
+  'firstBookTitle',
+  'b1title','b1author','b1reason',
+  'b2title','b2author','b2reason',
+  'b3title','b3author','b3reason',
+  'b4title','b4author','b4reason',
+  'seasonTheme','clubIntroTarget','clubIntroShare'
+];
+
+function collectSaveData() {
+  var d = {};
+  SAVE_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) d[id] = el.value;
+  });
+  // 라디오/체크박스
+  var hostRole = document.querySelector('input[name="hostRole"]:checked');
+  if (hostRole) d['hostRole'] = hostRole.value;
+  var itNew = document.getElementById('itNew');
+  if (itNew) d['itNew'] = itNew.checked;
+  var bmAll = document.getElementById('bmAll');
+  if (bmAll) d['bmAll'] = bmAll.checked;
+  d['_savedAt'] = new Date().toLocaleString('ko-KR');
+  return d;
+}
+
+function saveProgress() {
+  try {
+    var data = collectSaveData();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    setSaveStatus('saved', '✅ ' + data._savedAt + ' 저장됨');
+    showToast('💾 저장됐어요!');
+  } catch(e) {
+    setSaveStatus('unsaved', '⚠️ 저장 실패 · 브라우저 저장공간 확인');
+  }
+}
+
+function loadProgress() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) { showToast('저장된 내용이 없어요.'); return; }
+    var data = JSON.parse(raw);
+
+    SAVE_FIELDS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && data[id] !== undefined) {
+        el.value = data[id];
+        // char count 업데이트
+        var oninput = el.getAttribute('oninput');
+        if (oninput) {
+          var m = oninput.match(/'(\w+Count)'/);
+          if (m) countChars(el, m[1]);
+        }
+      }
+    });
+
+    // 라디오/체크박스 복원
+    if (data['hostRole']) {
+      var r = document.querySelector('input[name="hostRole"][value="' + data['hostRole'] + '"]');
+      if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+    }
+    if (data['itNew'] !== undefined) {
+      var itNew = document.getElementById('itNew');
+      if (itNew) { itNew.checked = data['itNew']; itNew.dispatchEvent(new Event('change')); }
+      var itCont = document.getElementById('itCont');
+      if (itCont) { itCont.checked = !data['itNew']; }
+    }
+    if (data['bmAll'] !== undefined) {
+      var bmAll = document.getElementById('bmAll');
+      if (bmAll) { bmAll.checked = data['bmAll']; bmAll.dispatchEvent(new Event('change')); }
+    }
+
+    setSaveStatus('saved', '📂 ' + (data._savedAt || '') + ' 불러옴');
+    showToast('📂 저장된 내용을 불러왔어요!');
+  } catch(e) {
+    showToast('⚠️ 불러오기 실패');
+  }
+}
+
+function setSaveStatus(type, msg) {
+  var el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'save-status ' + type;
+}
+
+// 자동저장 — 입력 5초 후
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  setSaveStatus('unsaved', '● 미저장 변경사항 있음');
+  autoSaveTimer = setTimeout(function() {
+    try {
+      var data = collectSaveData();
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      setSaveStatus('saved', '✅ 자동저장 · ' + data._savedAt);
+    } catch(e) {}
+  }, 5000);
+}
+
+// 페이지 로드 시 저장 상태 확인 + 자동저장 이벤트 등록
+window.addEventListener('load', function() {
+  // 저장 상태 확인
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      var data = JSON.parse(raw);
+      setSaveStatus('saved', '💾 ' + (data._savedAt || '') + ' 저장됨 · 불러오기 가능');
+    }
+  } catch(e) {}
+
+  // 모든 입력 필드에 자동저장 이벤트 등록
+  SAVE_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', scheduleAutoSave);
+  });
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(function(el) {
+    el.addEventListener('change', scheduleAutoSave);
+  });
+});
+
+// ══════════ 맞춤법 검사 ══════════
+async function checkSpell(targetId, btn) {
+  const ta = document.getElementById(targetId);
+  if (!ta || !ta.value.trim()) { showToast('먼저 내용을 입력해주세요.'); return; }
+  const resultEl = document.getElementById('spell_' + targetId);
+  const text = ta.value.trim();
+
+  btn.disabled = true;
+  btn.textContent = '검사 중…';
+  resultEl.className = 'spell-result';
+  resultEl.innerHTML = '';
+
+  try {
+    // Naver 맞춤법 검사기 (CORS 프록시 경유)
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const targetUrl = encodeURIComponent(
+      'https://m.search.naver.com/p/csearch/content/apicall/spellcheck/spellcheckpc?_callback=cb&q=' + encodeURIComponent(text)
+    );
+    const res = await fetch(proxyUrl + targetUrl);
+    const raw = await res.text();
+
+    // JSONP 파싱: cb({...}) → {...}
+    const jsonStr = raw.replace(/^cb\(/, '').replace(/\);?\s*$/, '');
+    const json = JSON.parse(jsonStr);
+    const result = json.message?.result;
+
+    if (!result) throw new Error('응답 없음');
+
+    const errors = result.errata_count || 0;
+    const html = (result.html || text)
+      .replace(/<span class="highlight_wrong">(.*?)<\/span>/g,
+        (_, w) => `<span class="spell-error">${w}</span>`)
+      .replace(/<span class="highlight_fix">(.*?)<\/span>/g,
+        (_, w) => `<span class="spell-correct">${w}</span>`);
+
+    if (errors === 0) {
+      resultEl.className = 'spell-result ok show';
+      resultEl.innerHTML = '✅ 맞춤법 오류가 없습니다.';
+    } else {
+      resultEl.className = 'spell-result has-error show';
+      // 교정 제안 추출
+      const corrected = (result.notag_html || '').replace(/<[^>]+>/g, '');
+      resultEl.innerHTML = `⚠️ <strong>오류 ${errors}건</strong> 발견\n\n${html}`
+        + (corrected && corrected !== text
+            ? `\n\n<button class="spell-apply-btn" onclick="applySpell('${targetId}', this)">교정안 적용하기</button>`
+            : '');
+      // 교정 텍스트를 버튼에 저장
+      if (corrected) resultEl.dataset.corrected = corrected;
+    }
+  } catch (e) {
+    // 프록시 실패 시 기본 안내
+    resultEl.className = 'spell-result has-error show';
+    resultEl.innerHTML = '⚠️ 맞춤법 서비스에 연결할 수 없어요.\n네이버 맞춤법 검사기(<a href="https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=%EB%A7%9E%EC%B6%A4%EB%B2%95+%EA%B2%80%EC%82%AC%EA%B8%B0" target="_blank" style="color:var(--gold)">링크</a>)에서 직접 확인해주세요.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔍 맞춤법 검사';
+}
+
+function applySpell(targetId, btn) {
+  const resultEl = document.getElementById('spell_' + targetId);
+  const corrected = resultEl.dataset.corrected;
+  if (!corrected) return;
+  const ta = document.getElementById(targetId);
+  ta.value = corrected;
+  // char count 업데이트
+  const countId = ta.getAttribute('oninput')?.match(/'(\w+Count)'/)?.[1];
+  if (countId) countChars(ta, countId);
+  showToast('교정안이 적용됐어요!');
+  resultEl.className = 'spell-result ok show';
+  resultEl.innerHTML = '✅ 교정안이 적용됐습니다.';
+}
+
+// ══════════ 노션 전송 ══════════
+const NOTION_PARENT_PAGE_ID = '3266e61e-a665-8112-b467-f9df524a893e';
+const NOTION_API_BASE = 'https://api.notion.com/v1';
+
+async function sendToNotion(data) {
+  // Notion API는 CORS 미지원이므로 Apps Script Webhook을 통해 전달
+  // notion_flag를 true로 설정하면 Apps Script에서 Notion API 호출
+  const webhookUrl = v('webhookUrl');
+  if (!webhookUrl) return { ok: false, reason: 'no_webhook' };
+
+  try {
+    await fetch(webhookUrl + '?target=notion', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, _notion: true, _notionParent: NOTION_PARENT_PAGE_ID })
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
+}
+
+// ══════════ 제출 완료 후 내용 다시 보기 ══════════
+function showSubmitReview() {
+  var d = collectData();
+  var isNew = document.getElementById('itNew') ? document.getElementById('itNew').checked : true;
+  var hostRole = document.querySelector('input[name="hostRole"]:checked');
+  var isHost = hostRole && hostRole.value === 'host';
+
+  function row(label, val) {
+    if (!val) return '';
+    return '<tr><td style="padding:7px 10px;font-size:12px;color:#777;font-weight:600;white-space:nowrap;vertical-align:top;">'
+      + label + '</td><td style="padding:7px 10px;font-size:13px;color:#1A1A1A;line-height:1.7;word-break:keep-all;">'
+      + val.replace(/\n/g, '<br>') + '</td></tr>';
+  }
+
+  var html = '<div id="reviewModal" style="position:fixed;inset:0;z-index:700;background:rgba(10,20,14,.7);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;">'
+    + '<div style="background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.3);">'
+
+    // 헤더
+    + '<div style="background:#1B3A2D;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">'
+    +   '<div>'
+    +     '<div style="font-family:Noto Serif KR,serif;font-size:16px;font-weight:700;color:#C9A84C;">📋 작성 내용 확인</div>'
+    +     '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">' + (d.clubName||'') + ' · 2605 시즌</div>'
+    +   '</div>'
+    +   '<button onclick="document.getElementById(\'reviewModal\').remove()" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;cursor:pointer;">×</button>'
+    + '</div>'
+
+    // 본문 (스크롤)
+    + '<div style="overflow-y:auto;padding:16px 24px 24px;flex:1;">'
+    + '<table style="width:100%;border-collapse:collapse;">'
+
+    // 기본 정보
+    + '<tr><td colspan="2" style="padding:12px 10px 4px;font-size:11px;font-weight:700;color:#1B3A2D;letter-spacing:0.12em;text-transform:uppercase;border-bottom:2px solid #1B3A2D;">모임 기본 정보</td></tr>'
+    + row('모임명', d.clubName)
+    + row('가격', d.price)
+    + row('요일·시간', [d.day, d.time].filter(Boolean).join(' '))
+    + row('인원', d.capacity)
+    + row('장소', d.place)
+    + row('기간', d.period)
+
+    // 소개글
+    + '<tr><td colspan="2" style="padding:16px 10px 4px;font-size:11px;font-weight:700;color:#1B3A2D;letter-spacing:0.12em;text-transform:uppercase;border-bottom:2px solid #1B3A2D;">모임 소개글</td></tr>'
+    + row('제목', d.headline)
+    + row('본문', d.introBody)
+
+    // 진행자 소개
+    + '<tr><td colspan="2" style="padding:16px 10px 4px;font-size:11px;font-weight:700;color:#1B3A2D;letter-spacing:0.12em;text-transform:uppercase;border-bottom:2px solid #1B3A2D;">' + (isHost ? '호스트' : '메이트') + ' 소개</td></tr>'
+    + row('이름', d.hostName || d.mateName)
+    + row('소개글', d.hostFinal || d.mateFinal)
+
+    // 도서
+    + '<tr><td colspan="2" style="padding:16px 10px 4px;font-size:11px;font-weight:700;color:#1B3A2D;letter-spacing:0.12em;text-transform:uppercase;border-bottom:2px solid #1B3A2D;">선정 도서</td></tr>'
+    + (d.b1title ? row('1회차', '📗 ' + d.b1title + (d.b1author ? ' / ' + d.b1author : '') + (d.b1reason ? '\n' + d.b1reason : '')) : '')
+    + (d.b2title ? row('2회차', '📙 ' + d.b2title + (d.b2author ? ' / ' + d.b2author : '') + (d.b2reason ? '\n' + d.b2reason : '')) : '')
+    + (d.b3title ? row('3회차', '📕 ' + d.b3title + (d.b3author ? ' / ' + d.b3author : '') + (d.b3reason ? '\n' + d.b3reason : '')) : '')
+    + (d.b4title ? row('4회차', '📘 ' + d.b4title + (d.b4author ? ' / ' + d.b4author : '') + (d.b4reason ? '\n' + d.b4reason : '')) : '')
+
+    + '</table></div>'
+
+    // 푸터
+    + '<div style="padding:16px 24px;border-top:1px solid #EDE7DC;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">'
+    +   '<button onclick="document.getElementById(\'reviewModal\').remove()" style="padding:10px 20px;border:1.5px solid #EDE7DC;border-radius:8px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:#666;">닫기</button>'
+    +   '<button onclick="openPreview();document.getElementById(\'reviewModal\').remove();" style="padding:10px 20px;border:none;border-radius:8px;background:#1B3A2D;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">👁️ 상품 페이지 미리보기</button>'
+    + '</div>'
+    + '</div></div>';
+
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ══════════ PREVIEW ══════════
+function buildPreviewHTML() {
+  const clubName = v('clubName') || '모임 이름';
+  const season = v('clubSeason');
+  const price = v('clubPrice');
+  const firstBook = v('firstBookTitle') || v('b1title');
+  const day = v('clubDay');
+  const timeInput = v('clubTimeInput');
+  const time = day && timeInput ? `${day} ${timeInput}` : (day || timeInput);
+  const capacity = v('clubCapacity');
+  const place = v('clubPlace') || '베이트리 북클럽';
+  const period = v('clubPeriod');
+
+  const isNew = document.getElementById('itNew').checked;
+  const headline = v(isNew ? 'clubHeadline' : 'contHeadline') || '(소개글 제목을 입력하세요)';
+  const introBody = v(isNew ? 'clubIntroText' : 'contIntroText') || '(모임 소개글을 입력하세요)';
+
+  const hostRole = document.querySelector('input[name="hostRole"]:checked').value;
+  const hostName = v('hostName');
+  const hostFinal = v('hostFinal') || v('hostWhy') || '(호스트 소개글을 입력하세요)';
+  const mateName = v('mateName');
+  const isMCont = document.getElementById('mtCont')?.checked;
+  const mateFinal = v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')) || '(메이트 소개글을 입력하세요)';
+
+  const books = [];
+  const emojis = ['📗', '📙', '📕', '📘'];
+  const ordinals = ['1회차', '2회차', '3회차', '4회차'];
+  const isAll = document.getElementById('bmAll').checked;
+  const bookCount = isAll ? 4 : 1;
+
+  for (let i = 1; i <= bookCount; i++) {
+    const t = v(`b${i}title`); if (!t) continue;
+    const r = v(`b${i}reason`);
+    books.push({ title: t, author: v(`b${i}author`), reason: r, emoji: emojis[i-1], ord: ordinals[i-1] });
+  }
+
+  let hostSection = '';
+  if (hostRole === 'host') {
+    hostSection += `
+      <div class="pp-section">
+        <h2>호스트(Host) <strong>${hostName || '이름'}</strong>님을 소개할게요</h2>
+        <div class="host-card">
+          <div class="host-avatar">🙋</div>
+          <div class="body-text">${hostFinal}</div>
+        </div>
+      </div>`;
+  }
+  if (hostRole === 'mate') {
+    hostSection += `
+      <div class="pp-section">
+        <h2>메이트(Mate) <strong>${mateName || '이름'}</strong>님을 소개할게요</h2>
+        <div class="host-card">
+          <div class="host-avatar">🤝</div>
+          <div class="body-text">${mateFinal}</div>
+        </div>
+      </div>`;
+  }
+
+  const bookHTML = books.length > 0 ? `
+    <div class="pp-section">
+      <h2>우리는 이 책으로 만날게요</h2>
+      <div class="book-list">
+        ${books.map(b => `
+          <div class="book-entry">
+            <div class="book-entry-title">${b.emoji} ${b.ord} : ${b.title}${b.author ? ' <span style="font-size:14px;font-weight:400;color:var(--ink-light);">— ${b.author}</span>' : ''}</div>
+            <div class="book-entry-body">${b.reason || '(선정 이유를 입력하세요)'}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  return `
+    <h1>${clubName}${season ? ' <span style="font-size:18px;color:var(--ink-light);font-weight:400;">— ${season}</span>' : ''}</h1>
+
+    <div class="meta-grid">
+      ${firstBook ? `<div class="meta-item"><strong>📖 첫 책 :</strong> ${firstBook}</div>` : ''}
+      ${time ? `<div class="meta-item"><strong>⏰ 시간 :</strong> ${time}</div>` : ''}
+      ${capacity ? `<div class="meta-item"><strong>🙋 인원 :</strong> ${capacity}</div>` : ''}
+      ${price ? `<div class="meta-item"><strong>💰 가격 :</strong> ${price}</div>` : ''}
+      ${place ? `<div class="meta-item"><strong>🏡 장소 :</strong> ${place}</div>` : ''}
+      ${period ? `<div class="meta-item"><strong>📆 기간 :</strong> ${period}</div>` : ''}
+    </div>
+
+    <div class="pp-section">
+      <h2>${headline}</h2>
+      <div class="body-text">${introBody}</div>
+    </div>
+
+    ${hostSection}
+    ${bookHTML}
+
+    <div class="pp-section">
+      <h2>✅ 모임은 이렇게 진행됩니다</h2>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+        <li style="font-size:14px;color:var(--ink-mid);">• 모임 이틀 전 23:59:59까지 책을 읽고, 독서노트를 작성해야 모임에 참석하실 수 있어요.</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 모임 하루 전, 독서노트를 공유하고 멤버들의 질문에 따라 토론해요.</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 독서모임은 3시간 이상 진행됩니다. 이외에도 멤버들과 번개, 뒤풀이를 함께 하실 수 있어요.</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 모임별 단체 카카오톡방을 통해 모임 공지 및 이벤트 소식을 알려드려요.</li>
+      </ul>
+    </div>
+
+    <div class="pp-section">
+      <h2>💝 멤버십 혜택</h2>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+        <li style="font-size:14px;color:var(--ink-mid);">• 30개의 독서모임에 놀러가실 수 있어요.</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 라이브러리 이용 무료(도서 열람 및 대출)</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 다양한 커뮤니티 이벤트를 즐기실 수 있어요.</li>
+        <li style="font-size:14px;color:var(--ink-mid);">• 무료 쿠폰 : 다른 독서모임 놀러가기 1회, 게더링 1회, 오픈 세미나 1회</li>
+        ${period ? `<li style="font-size:14px;color:var(--ink-mid);">• ${period}까지 멤버십이 유지됩니다.</li>` : ''}
+      </ul>
+    </div>
+  `;
+}
+
+function openPreview() {
+  document.getElementById('productPreviewContent').innerHTML = buildPreviewHTML();
+  document.getElementById('previewOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+  document.getElementById('previewOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function closePreviewOutside(e) {
+  if (e.target === document.getElementById('previewOverlay')) closePreview();
+}
+
+// ══════════ EXPORT ══════════
+function buildPlainText() {
+  const clubName = v('clubName');
+  const season = v('clubSeason');
+  const isNew = document.getElementById('itNew').checked;
+  const headline = v(isNew ? 'clubHeadline' : 'contHeadline');
+  const introBody = v(isNew ? 'clubIntroText' : 'contIntroText');
+  const hostRole = document.querySelector('input[name="hostRole"]:checked').value;
+  const isAll = document.getElementById('bmAll').checked;
+
+  let txt = `══════════════════════════════
+베이트리 북클럽 · 시즌 준비 완성본
+${clubName}${season ? ' | ' + season : ''}
+생성일: ${new Date().toLocaleDateString('ko-KR')}
+══════════════════════════════
+
+【 모임 기본 정보 】
+모임명: ${clubName}
+시즌: ${season}
+가격: ${v('clubPrice')}
+첫 책: ${v('firstBookTitle') || v('b1title')}
+요일·시간: ${[v('clubDay'), v('clubTimeInput')].filter(Boolean).join(' ')}
+인원: ${v('clubCapacity')}
+장소: ${v('clubPlace') || '베이트리 북클럽'}
+기간: ${v('clubPeriod')}
+
+【 모임 소개글 】
+제목: ${headline}
+
+${introBody}
+`;
+  if (hostRole === 'host') {
+    txt += `\n【 호스트 소개 · ${v('hostName')} 】\n${v('hostFinal') || v('hostWhy')}\n`;
+  }
+  if (hostRole === 'mate') {
+    const isMCont = document.getElementById('mtCont')?.checked;
+    const mateBody = v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy'));
+    txt += `\n【 메이트 소개 · ${v('mateName')} 】\n${mateBody}\n`;
+  }
+
+  txt += `\n【 선정 도서 · ${v('seasonTheme') || '시즌 테마'} 】\n`;
+  const count = isAll ? 4 : 1;
+  const ords = ['1회차', '2회차', '3회차', '4회차'];
+  for (let i = 1; i <= count; i++) {
+    const t = v(`b${i}title`); if (!t) continue;
+    txt += `\n[${ords[i-1]}] ${t} / ${v(`b${i}author`)}\n${v(`b${i}reason`)}\n`;
+  }
+
+  txt += `\n══════════════════════════════\nwww.baytreebookclub.com\n`;
+  return txt;
+}
+
+function copyProductText() {
+  navigator.clipboard.writeText(buildPlainText()).then(() => showToast('텍스트가 복사되었어요!'));
+}
+
+function downloadTxt() {
+  const txt = buildPlainText();
+  const name = v('clubName') || 'baytree';
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${name}-시즌준비.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('저장되었어요!');
+}
+
+// ══════════ SUBMIT → Sheets 저장 + HTML 생성 ══════════
+function collectData() {
+  var isNew    = document.getElementById('itNew').checked;
+  var hostRole = (document.querySelector('input[name="hostRole"]:checked') || {}).value || 'host';
+  var isMCont  = document.getElementById('mtCont') && document.getElementById('mtCont').checked;
+  var isAll    = document.getElementById('bmAll').checked;
+
+  return {
+    clubName:    v('clubName'),
+    season:      v('clubSeason') || '2605',
+    clubType:    v('clubType'),
+    price:       v('clubPrice'),
+    firstBook:   v('firstBookTitle') || v('b1title'),
+    day:         v('clubDay'),
+    time:        v('clubTimeInput'),
+    capacity:    v('clubCapacity'),
+    place:       v('clubPlace') || '베이트리 북클럽',
+    period:      v('clubPeriod'),
+    headline:    v(isNew ? 'clubHeadline' : 'contHeadline'),
+    introBody:   v(isNew ? 'clubIntroText' : 'contIntroText'),
+    hostRole:    hostRole,
+    hostName:    v('hostName'),
+    hostFinal:   v('hostFinal') || v('hostWhy'),
+    mateName:    v('mateName'),
+    mateFinal:   v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')),
+    seasonTheme: v('seasonTheme'),
+    b1title: v('b1title'), b1author: v('b1author'), b1reason: v('b1reason'),
+    b2title: isAll ? v('b2title') : '', b2author: isAll ? v('b2author') : '', b2reason: isAll ? v('b2reason') : '',
+    b3title: isAll ? v('b3title') : '', b3author: isAll ? v('b3author') : '', b3reason: isAll ? v('b3reason') : '',
+    b4title: isAll ? v('b4title') : '', b4author: isAll ? v('b4author') : '', b4reason: isAll ? v('b4reason') : ''
+  };
+}
+
+async function submitPage() {
+  var clubName = v('clubName');
+  if (!clubName) { showToast('⚠️ 모임 이름을 먼저 입력해주세요.'); goSection(1); return; }
+
+  var data        = collectData();
+  var webhookUrl  = v('webhookUrl');
+  var htmlContent = generateFinalHTML();
+  var results     = { sheets: null, notion: null, html: false };
+
+  // ① Google Sheets 전송
+  if (webhookUrl) {
+    showToast('📤 Google Sheets에 전송 중...');
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data)
+      });
+      results.sheets = 'ok';
+    } catch (err) {
+      results.sheets = 'fail';
+    }
+  }
+
+  // ② 노션 페이지 생성 (Apps Script 경유)
+  if (webhookUrl) {
+    showToast('📝 노션 페이지 생성 중...');
+    try {
+      await fetch(webhookUrl + '?target=notion', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ ...data, _notion: true, _notionParent: NOTION_PARENT_PAGE_ID })
+      });
+      results.notion = 'ok';
+    } catch (err) {
+      results.notion = 'fail';
+    }
+  }
+
+  // ③ HTML 파일 다운로드
+  try {
+    var name = clubName.replace(/\s+/g, '-');
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = name + '-2605-상품페이지.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    results.html = true;
+  } catch (err) {
+    results.html = false;
+  }
+
+  // ④ 결과 모달 표시
+  showResultModal(clubName, webhookUrl, results);
+}
+
+function showResultModal(clubName, webhookUrl, results) {
+  // 기존 모달 제거
+  var old = document.getElementById('resultModal');
+  if (old) old.remove();
+
+  var sheetsMsg = '';
+  if (!webhookUrl) {
+    sheetsMsg = '<div class="rm-row rm-skip"><span>📋 Google Sheets</span><span>URL 미입력 · 건너뜀</span></div>';
+  } else if (results.sheets === 'ok') {
+    sheetsMsg = '<div class="rm-row rm-ok"><span>📊 Google Sheets</span><span>✅ 저장 완료 · Gmail 알림 발송</span></div>';
+  } else {
+    sheetsMsg = '<div class="rm-row rm-fail"><span>📊 Google Sheets</span><span>❌ 전송 실패 · URL 확인 필요</span></div>';
+  }
+
+  var notionMsg = '';
+  if (!webhookUrl) {
+    notionMsg = '<div class="rm-row rm-skip"><span>📝 노션</span><span>URL 미입력 · 건너뜀</span></div>';
+  } else if (results.notion === 'ok') {
+    notionMsg = '<div class="rm-row rm-ok"><span>📝 노션</span><span>✅ 페이지 생성 완료</span></div>';
+  } else {
+    notionMsg = '<div class="rm-row rm-fail"><span>📝 노션</span><span>❌ 생성 실패 · Apps Script 확인 필요</span></div>';
+  }
+
+  var htmlMsg = results.html
+    ? '<div class="rm-row rm-ok"><span>📄 HTML 파일</span><span>✅ 다운로드 완료</span></div>'
+    : '<div class="rm-row rm-fail"><span>📄 HTML 파일</span><span>❌ 생성 실패</span></div>';
+
+  var modal = document.createElement('div');
+  modal.id = 'resultModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(10,20,14,.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:460px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.3);">'
+    + '<div style="background:#1B3A2D;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;">'
+    +   '<div>'
+    +     '<div style="font-family:Noto Serif KR,serif;font-size:17px;font-weight:700;color:#C9A84C;">제출 완료</div>'
+    +     '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;">' + clubName + ' · 2605 시즌</div>'
+    +   '</div>'
+    +   '<button onclick="document.getElementById(\'resultModal\').remove()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>'
+    + '</div>'
+    + '<style>'
+    + '.rm-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #EDE7DC;font-size:13px;}'
+    + '.rm-row:last-child{border-bottom:none;}'
+    + '.rm-row span:first-child{color:#3A3A3A;font-weight:600;}'
+    + '.rm-ok span:last-child{color:#2D6A4F;font-weight:500;}'
+    + '.rm-fail span:last-child{color:#C62828;font-weight:500;}'
+    + '.rm-skip span:last-child{color:#999;}'
+    + '</style>'
+    + '<div style="padding:8px 28px 4px;">' + sheetsMsg + notionMsg + htmlMsg + '</div>'
+    + '<div style="padding:20px 28px 24px;display:flex;gap:10px;justify-content:flex-end;">'
+    +   '<button onclick="document.getElementById(\'resultModal\').remove()" style="padding:10px 20px;border:1.5px solid #EDE7DC;border-radius:8px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:#666;">닫기</button>'
+    +   '<button onclick="showSubmitReview();document.getElementById(\'resultModal\').remove();" style="padding:10px 20px;border:1.5px solid #1B3A2D;border-radius:8px;background:transparent;color:#1B3A2D;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">📋 작성 내용 보기</button>'
+    +   '<button onclick="openPreview();document.getElementById(\'resultModal\').remove();" style="padding:10px 20px;border:none;border-radius:8px;background:#1B3A2D;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">👁️ 미리보기 열기</button>'
+    + '</div>'
+    + '</div>';
+
+  document.body.appendChild(modal);
+}
+
+function generateFinalHTML() {
+  var clubName  = v('clubName') || '모임 이름';
+  var season    = v('clubSeason');
+  var price     = v('clubPrice');
+  var firstBook = v('firstBookTitle') || v('b1title');
+  var day       = v('clubDay');
+  var timeInput = v('clubTimeInput');
+  var time      = (day && timeInput) ? (day + ' ' + timeInput) : (day || timeInput);
+  var capacity  = v('clubCapacity');
+  var place     = v('clubPlace') || '베이트리 북클럽';
+  var period    = v('clubPeriod');
+
+  var isNew     = document.getElementById('itNew').checked;
+  var headline  = v(isNew ? 'clubHeadline' : 'contHeadline') || '';
+  var introBody = v(isNew ? 'clubIntroText' : 'contIntroText') || '';
+
+  var hostRoleEl = document.querySelector('input[name="hostRole"]:checked');
+  var hostRole  = hostRoleEl ? hostRoleEl.value : 'host';
+  var hostName  = v('hostName');
+  var hostFinal = v('hostFinal') || v('hostWhy') || '';
+  var mateName  = v('mateName');
+  var mtContEl  = document.getElementById('mtCont');
+  var isMCont   = mtContEl && mtContEl.checked;
+  var mateFinal = v('mateFinal') || (isMCont ? v('mateWhyCont') : v('mateWhy')) || '';
+
+  var isAll     = document.getElementById('bmAll').checked;
+  var bookCount = isAll ? 4 : 1;
+  var emojis    = ['📗','📙','📕','📘'];
+  var ordinals  = ['1회차','2회차','3회차','4회차'];
+  var books = [];
+  for (var i = 1; i <= bookCount; i++) {
+    var t = v('b' + i + 'title');
+    if (!t) continue;
+    books.push({ title: t, author: v('b'+i+'author'), reason: v('b'+i+'reason'), emoji: emojis[i-1], ord: ordinals[i-1] });
+  }
+
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function nl(s)  { return (s||'').replace(/\n/g,'<br>'); }
+
+  var metaItems = '';
+  if (firstBook) metaItems += '<div class="mi"><span class="ml">📖 첫 책</span><span class="mv">' + esc(firstBook) + '</span></div>';
+  if (time)      metaItems += '<div class="mi"><span class="ml">⏰ 시간</span><span class="mv">' + esc(time) + '</span></div>';
+  if (capacity)  metaItems += '<div class="mi"><span class="ml">🙋 인원</span><span class="mv">' + esc(capacity) + '</span></div>';
+  if (price)     metaItems += '<div class="mi"><span class="ml">💰 가격</span><span class="mv">' + esc(price) + '</span></div>';
+  if (place)     metaItems += '<div class="mi"><span class="ml">🏡 장소</span><span class="mv">' + esc(place) + '</span></div>';
+  if (period)    metaItems += '<div class="mi"><span class="ml">📆 기간</span><span class="mv">' + esc(period) + '</span></div>';
+
+  var hostHTML = '';
+  if (hostRole === 'host' && hostName) {
+    hostHTML = '<section class="cs"><h2 class="sh">호스트(Host) <strong>' + esc(hostName) + '</strong>님을 소개할게요</h2>'
+      + '<div class="hc"><div class="ha">🙋</div><p class="bt">' + nl(esc(hostFinal)) + '</p></div></section>';
+  }
+  if (hostRole === 'mate' && mateName) {
+    hostHTML = '<section class="cs"><h2 class="sh">메이트(Mate) <strong>' + esc(mateName) + '</strong>님을 소개할게요</h2>'
+      + '<div class="hc"><div class="ha">🤝</div><p class="bt">' + nl(esc(mateFinal)) + '</p></div></section>';
+  }
+
+  var bookRows = '';
+  for (var bi = 0; bi < books.length; bi++) {
+    var b = books[bi];
+    bookRows += '<div class="be"><div class="bet">' + b.emoji + ' ' + b.ord + ' : <strong>' + esc(b.title) + '</strong>'
+      + (b.author ? '<span class="ba"> — ' + esc(b.author) + '</span>' : '') + '</div>'
+      + '<p class="beb">' + nl(esc(b.reason)) + '</p></div>';
+  }
+  var booksHTML = books.length > 0
+    ? '<section class="cs"><h2 class="sh">우리는 이 책으로 만날게요</h2><div class="bl">' + bookRows + '</div></section>'
+    : '';
+
+  var introHTML = headline
+    ? '<section class="cs"><h2 class="sh">' + esc(headline) + '</h2><p class="bt">' + nl(esc(introBody)) + '</p></section>'
+    : '';
+
+  var periodLi = period ? '<li>' + esc(period) + '까지 멤버십이 유지됩니다.</li>' : '';
+
+  var SO = '<' + 'script' + '>';
+  var SC = '</' + 'script' + '>';
+
+  var css = [
+    '*{box-sizing:border-box;margin:0;padding:0;}',
+    ':root{--g:#1B3A2D;--gm:#2D4A3E;--gold:#C9A84C;--gl:#E8C97A;--cr:#F8F4EE;--cd:#EDE7DC;--ink:#1A1A1A;--im:#3A3A3A;--il:#777;--w:#FFF;--r:14px;}',
+    'body{font-family:"Noto Sans KR",sans-serif;background:#F0EBE3;color:var(--ink);}',
+    '#gate{position:fixed;inset:0;z-index:9999;background:var(--g);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;}',
+    '.gl2{font-family:"Noto Serif KR",serif;color:var(--gold);font-size:22px;font-weight:700;letter-spacing:.12em;text-align:center;}',
+    '.gs{color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.18em;display:block;margin-top:4px;}',
+    '.gb{background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);padding:32px 36px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;}',
+    '.gb label{color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.08em;}',
+    '.gb input{width:100%;padding:12px 16px;border:1.5px solid rgba(201,168,76,.3);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:15px;outline:none;letter-spacing:.12em;font-family:inherit;}',
+    '.gb input:focus{border-color:var(--gold);}',
+    '.gb input::placeholder{color:rgba(255,255,255,.25);}',
+    '.gbtn{padding:13px;background:var(--gold);color:var(--g);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}',
+    '.gbtn:hover{background:var(--gl);}',
+    '.gerr{color:#FF8080;font-size:12px;text-align:center;display:none;}',
+    '#content{display:none;}',
+    '.ph{background:var(--g);padding:18px 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.18);}',
+    '.phl{text-decoration:none;font-family:"Noto Serif KR",serif;color:var(--gold);font-size:13px;font-weight:600;letter-spacing:.1em;}',
+    '.phl span{display:block;font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.18em;margin-top:1px;font-family:"Noto Sans KR",sans-serif;}',
+    '.phb{padding:5px 14px;border-radius:999px;border:1px solid rgba(201,168,76,.3);color:rgba(255,255,255,.6);font-size:11px;}',
+    '.hero{background:var(--g);padding:52px 40px 44px;}',
+    '.hi{max-width:780px;margin:0 auto;}',
+    '.ab{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:999px;padding:4px 12px;color:var(--gold);font-size:11px;font-weight:700;margin-bottom:20px;letter-spacing:.08em;}',
+    '.hero h1{font-family:"Noto Serif KR",serif;font-size:34px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:8px;}',
+    '.hs2{color:var(--gold);font-size:13px;font-weight:500;letter-spacing:.1em;display:block;margin-bottom:24px;}',
+    '.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}',
+    '.mi{background:rgba(255,255,255,.07);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:13px 15px;}',
+    '.ml{display:block;font-size:11px;color:rgba(255,255,255,.45);margin-bottom:4px;}',
+    '.mv{display:block;font-size:14px;font-weight:600;color:#fff;}',
+    '.pb{max-width:780px;margin:0 auto;padding:48px 40px 80px;}',
+    '.cs{margin-bottom:48px;}',
+    '.sh{font-family:"Noto Serif KR",serif;font-size:21px;font-weight:700;color:var(--ink);margin-bottom:18px;padding-bottom:14px;border-bottom:1.5px solid var(--cd);line-height:1.5;}',
+    '.sh strong{color:var(--g);}',
+    '.bt{font-size:15px;line-height:1.95;color:var(--im);word-break:keep-all;}',
+    '.hc{display:flex;align-items:flex-start;gap:20px;background:var(--cr);border-radius:var(--r);padding:24px;border:1px solid var(--cd);}',
+    '.ha{width:52px;height:52px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}',
+    '.bl{display:flex;flex-direction:column;}',
+    '.be{padding:22px 0;border-bottom:1px solid var(--cd);}',
+    '.be:last-child{border-bottom:none;}',
+    '.bet{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}',
+    '.ba{font-size:14px;font-weight:400;color:var(--il);}',
+    '.beb{font-size:14px;line-height:1.9;color:var(--im);}',
+    '.ic{background:#fff;border-radius:var(--r);border:1px solid var(--cd);overflow:hidden;margin-bottom:16px;}',
+    '.ich{background:var(--cr);padding:14px 22px;border-bottom:1px solid var(--cd);font-size:14px;font-weight:700;color:var(--im);}',
+    '.icb{padding:18px 22px;}',
+    '.il2{list-style:none;display:flex;flex-direction:column;gap:7px;}',
+    '.il2 li{font-size:14px;color:var(--im);line-height:1.7;padding-left:14px;position:relative;}',
+    '.il2 li::before{content:"·";position:absolute;left:0;color:var(--gold);font-weight:700;font-size:16px;top:-1px;}',
+    '.pf{background:var(--g);padding:28px 40px;text-align:center;}',
+    '.pf p{color:rgba(255,255,255,.45);font-size:12px;line-height:2;}',
+    '.pf a{color:var(--gold);text-decoration:none;}',
+    '@media(max-width:640px){.hero{padding:32px 20px 28px;}.pb{padding:28px 20px 60px;}.mg{grid-template-columns:1fr 1fr;}.hc{flex-direction:column;}.ph{padding:14px 20px;}}'
+  ].join('\n');
+
+  var html = '<!DOCTYPE html>\n'
+    + '<html lang="ko">\n<head>\n'
+    + '<meta charset="UTF-8">\n'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    + '<title>' + esc(clubName) + ' · 베이트리 북클럽</title>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    + '<style>' + css + '</style>\n'
+    + '</head>\n<body>\n'
+    + '<div id="gate">'
+    +   '<div class="gl2">🌳 BAYTREE. BOOKCLUB<span class="gs">MEMBER ACCESS ONLY</span></div>'
+    +   '<div class="gb">'
+    +     '<label>접근 비밀번호</label>'
+    +     '<input type="password" id="pwInput" placeholder="••••••">'
+    +     '<button class="gbtn" onclick="checkPw()">입장하기</button>'
+    +     '<div class="gerr" id="gateError">비밀번호가 올바르지 않습니다.</div>'
+    +   '</div>'
+    + '</div>\n'
+    + '<div id="content">\n'
+    + '<header class="ph">'
+    +   '<a class="phl" href="https://www.baytreebookclub.com" target="_blank">BAYTREE. BOOKCLUB<span>www.baytreebookclub.com</span></a>'
+    +   '<span class="phb">' + esc(season || '2605') + ' 시즌</span>'
+    + '</header>\n'
+    + '<div class="hero"><div class="hi">'
+    +   '<span class="ab">🔒 관계자 전용 · 미공개 페이지</span>'
+    +   '<h1>' + esc(clubName) + '</h1>'
+    +   (season ? '<span class="hs2">' + esc(season) + ' 시즌 · 베이트리 북클럽</span>' : '')
+    +   '<div class="mg">' + metaItems + '</div>'
+    + '</div></div>\n'
+    + '<div class="pb">\n'
+    + introHTML
+    + hostHTML
+    + booksHTML
+    + '<section class="cs">'
+    +   '<div class="ic"><div class="ich">✅ 모임은 이렇게 진행됩니다</div><div class="icb"><ul class="il2">'
+    +     '<li>모임 이틀 전 23:59:59까지 책을 읽고, 독서노트를 작성해야 모임에 참석하실 수 있어요.</li>'
+    +     '<li>모임 하루 전, 독서노트를 공유하고 멤버들의 질문에 따라 토론해요.</li>'
+    +     '<li>독서모임은 3시간 이상 진행됩니다. 이외에도 멤버들과 번개, 뒤풀이를 함께 하실 수 있어요.</li>'
+    +     '<li>모임별 단체 카카오톡방을 통해 모임 공지 및 이벤트 소식을 알려드려요.</li>'
+    +   '</ul></div></div>'
+    +   '<div class="ic"><div class="ich">💝 멤버십 혜택</div><div class="icb"><ul class="il2">'
+    +     '<li>30개의 독서모임에 놀러가실 수 있어요.</li>'
+    +     '<li>라이브러리 이용 무료 (도서 열람 및 대출)</li>'
+    +     '<li>다양한 커뮤니티 이벤트를 즐기실 수 있어요.</li>'
+    +     '<li>무료 쿠폰 : 다른 독서모임 놀러가기 1회, 게더링 1회, 오픈 세미나 1회</li>'
+    +     periodLi
+    +   '</ul></div></div>'
+    + '</section>\n'
+    + '</div>\n'
+    + '<footer class="pf"><p>'
+    +   '<a href="https://www.baytreebookclub.com" target="_blank">www.baytreebookclub.com</a><br>'
+    +   '부산 부산진구 서전로67번길 6, B1 · 010-5119-2270<br>'
+    +   '© 베이트리 북클럽 · 이 페이지는 관계자 전용입니다.'
+    + '</p></footer>\n'
+    + '</div>\n'
+    + SO
+    + 'var PW="baytree2605";'
+    + 'function checkPw(){'
+    +   'var val=document.getElementById("pwInput").value;'
+    +   'if(val===PW){'
+    +     'document.getElementById("gate").style.display="none";'
+    +     'document.getElementById("content").style.display="block";'
+    +   '}else{'
+    +     'document.getElementById("gateError").style.display="block";'
+    +     'document.getElementById("pwInput").value="";'
+    +     'document.getElementById("pwInput").focus();'
+    +   '}'
+    + '}'
+    + 'document.getElementById("pwInput").addEventListener("keydown",function(e){if(e.key==="Enter")checkPw();});'
+    + SC + '\n'
+    + '</body>\n</html>';
+
+  return html;
+}
+</script>
+</body>
+</html>
