@@ -226,57 +226,14 @@
   .book-block-body { padding: 20px; }
 
   /* ─── AI ACTIONS ─── */
-  .ai-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-  .btn-ai {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 15px;
-    background: var(--green-deep); color: var(--gold);
-    border: none; border-radius: var(--radius-sm);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px; font-weight: 700; cursor: pointer;
-    transition: all 0.2s; letter-spacing: 0.02em;
-  }
-  .btn-ai:hover { background: var(--green-mid); }
-  .btn-ai:disabled { opacity: 0.45; cursor: wait; }
-  .btn-ai-ghost {
-    background: transparent; color: var(--green-deep);
-    border: 1.5px solid var(--green-deep);
-  }
-  .btn-ai-ghost:hover { background: rgba(27,58,45,0.05); }
-  .spinner {
-    width: 11px; height: 11px;
-    border: 1.5px solid rgba(201,168,76,0.3);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-  .btn-ai.loading .spinner { display: block; }
-  .btn-ai.loading .label { display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .ai-output {
-    margin-top: 12px;
-    padding: 16px 18px;
-    background: #F0FAF4;
-    border: 1px solid rgba(45,74,62,0.15);
-    border-left: 3px solid var(--gold);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    font-size: 13.5px; line-height: 1.85; color: var(--ink-mid);
-    white-space: pre-wrap; display: none;
-    position: relative;
-  }
-  .ai-output.show { display: block; }
-  .ai-output-actions { display: flex; gap: 8px; margin-top: 12px; }
-  .btn-use {
     padding: 7px 14px;
     background: var(--gold); color: var(--green-deep);
     border: none; border-radius: 6px;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 12px; font-weight: 700; cursor: pointer;
   }
-  .btn-use:hover { background: var(--gold-light); }
-  .btn-copy-small {
     padding: 7px 14px;
     background: transparent; color: var(--ink-light);
     border: 1px solid var(--cream-dark); border-radius: 6px;
@@ -397,6 +354,38 @@
     .meta-grid { grid-template-columns: 1fr; }
     .preview-modal-footer { flex-direction: column; }
   }
+
+  /* ─── 맞춤법 검사 ─── */
+  .spell-wrap { position: relative; }
+  .btn-spell {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; margin-top: 6px;
+    background: transparent; color: var(--green-deep);
+    border: 1.5px solid var(--green-deep); border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 11px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-spell:hover { background: rgba(27,58,45,0.06); }
+  .btn-spell:disabled { opacity: 0.4; cursor: wait; }
+  .spell-result {
+    margin-top: 8px; padding: 12px 14px;
+    border-radius: var(--radius-sm); font-size: 13px; line-height: 1.8;
+    display: none; white-space: pre-wrap; word-break: keep-all;
+  }
+  .spell-result.show { display: block; }
+  .spell-result.ok { background: #F0FAF4; border: 1px solid #A8D5B5; color: #1B5E2D; }
+  .spell-result.has-error { background: #FFF8F0; border: 1px solid #F5C28A; color: #5D3A00; }
+  .spell-error { background: #FDEFC8; border-radius: 3px; padding: 0 2px; }
+  .spell-correct { color: var(--green-deep); font-weight: 700; }
+  .spell-apply-btn {
+    margin-top: 8px; padding: 7px 14px;
+    background: var(--gold); color: var(--green-deep);
+    border: none; border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .spell-apply-btn:hover { background: var(--gold-light); }
 </style>
 </head>
 <body>
@@ -638,6 +627,10 @@
             <div class="field" style="margin-bottom:14px;">
               <label>모임 소개 본문</label>
               <textarea class="lg" id="clubIntroText" placeholder="이 모임이 왜 필요한지, 어떤 사람들을 위한 모임인지, 함께 무엇을 나눌지를 3~5문장으로 적어보세요." oninput="countChars(this,'introCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('clubIntroText', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_clubIntroText"></div>
+            </div>
               <div class="char-count" id="introCount">0자</div>
             </div>
             <div class="row col2">
@@ -673,37 +666,17 @@
             <div class="field" style="margin-bottom:14px;">
               <label>이번 시즌 소개 본문</label>
               <textarea class="lg" id="contIntroText" placeholder="지난 시즌을 이어받아 이번엔 어떤 방향으로 나아가는지…" oninput="countChars(this,'contCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('contIntroText', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_contIntroText"></div>
+            </div>
               <div class="char-count" id="contCount">0자</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- AI 생성 -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-header-icon">✨</span>
-          <div><h3>AI 소개글 완성</h3><p>입력한 내용을 베이트리 톤으로 완성합니다</p></div>
-        </div>
-        <div class="card-body">
-          <div class="ai-actions">
-            <button class="btn-ai" onclick="genIntro('headline')">
-              <div class="spinner"></div><span class="label">📌 제목 카피 생성</span>
-            </button>
-            <button class="btn-ai" onclick="genIntro('body')">
-              <div class="spinner"></div><span class="label">📝 본문 생성 (홈페이지용)</span>
-            </button>
-            <button class="btn-ai btn-ai-ghost" onclick="genIntro('sns')">
-              <div class="spinner"></div><span class="label">📱 SNS 캡션 생성</span>
-            </button>
-          </div>
-          <div class="ai-output" id="introAiOut">
-            <div class="ai-output-text"></div>
-            <div class="ai-output-actions">
-              <button class="btn-use" onclick="applyIntroAi()">← 적용하기</button>
-              <button class="btn-copy-small" onclick="copyText('introAiOut')">복사</button>
-            </div>
-          </div>
+      
         </div>
       </div>
 
@@ -778,6 +751,10 @@
             <div class="field" style="margin-bottom:14px;">
               <label>요즘 가장 큰 고민 · 이 모임을 시작하는 이유</label>
               <textarea id="hostWhy" placeholder="예: 요즘 제 가장 큰 고민은 '앞으로 나는 어떤 일을 할 수 있을까?'입니다…" oninput="countChars(this,'hostWhyCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('hostWhy', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_hostWhy"></div>
+            </div>
               <div class="char-count" id="hostWhyCount">0자</div>
             </div>
             <div class="field" style="margin-bottom:14px;">
@@ -795,21 +772,14 @@
                 <textarea class="sm" id="hostLastFeel" placeholder="함께 읽으면서 달라진 것, 기억에 남는 순간…"></textarea>
               </div>
             </div>
-            <div class="ai-actions">
-              <button class="btn-ai" onclick="genHost()">
-                <div class="spinner"></div><span class="label">✨ 호스트 소개글 생성</span>
-              </button>
-            </div>
-            <div class="ai-output" id="hostAiOut">
-              <div class="ai-output-text"></div>
-              <div class="ai-output-actions">
-                <button class="btn-use" onclick="applyHostAi()">← 적용하기</button>
-                <button class="btn-copy-small" onclick="copyText('hostAiOut')">복사</button>
-              </div>
-            </div>
+
             <div class="field" style="margin-top:16px;">
-              <label>최종 소개글 <span class="hint">(AI 생성 후 직접 수정 가능)</span></label>
-              <textarea class="lg" id="hostFinal" placeholder="AI 생성 후 여기에 붙여 수정하세요…"></textarea>
+              <label>소개글 직접 작성</label>
+              <textarea class="lg" id="hostFinal" placeholder="이 모임을 함께 하고 싶은 이유, 요즘의 고민, 멤버들에게 전하고 싶은 말을 자유롭게 적어주세요…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('hostFinal', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_hostFinal"></div>
+            </div>
             </div>
           </div>
         </div>
@@ -852,6 +822,10 @@
               <div class="field" style="margin-bottom:14px;">
                 <label>요즘의 고민</label>
                 <textarea id="mateWhy" placeholder="요즘 제 가장 큰 고민은… (1인칭으로 솔직하게)" oninput="countChars(this,'mateWhyCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateWhy', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateWhy"></div>
+            </div>
                 <div class="char-count" id="mateWhyCount">0자</div>
               </div>
               <div class="field" style="margin-bottom:14px;">
@@ -865,6 +839,10 @@
               <div class="field" style="margin-bottom:14px;">
                 <label>요즘의 고민</label>
                 <textarea id="mateWhyCont" placeholder="이번 시즌에도 고민이 이어지고 있어요… (1인칭으로)" oninput="countChars(this,'mateWhyContCount')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateWhyCont', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateWhyCont"></div>
+            </div>
                 <div class="char-count" id="mateWhyContCount">0자</div>
               </div>
               <div class="field" style="margin-bottom:14px;">
@@ -878,21 +856,13 @@
               </div>
             </div>
 
-            <div class="ai-actions">
-              <button class="btn-ai" onclick="genMate()">
-                <div class="spinner"></div><span class="label">✨ 메이트 소개글 생성</span>
-              </button>
-            </div>
-            <div class="ai-output" id="mateAiOut">
-              <div class="ai-output-text"></div>
-              <div class="ai-output-actions">
-                <button class="btn-use" onclick="applyMateAi()">← 적용하기</button>
-                <button class="btn-copy-small" onclick="copyText('mateAiOut')">복사</button>
-              </div>
-            </div>
             <div class="field" style="margin-top:16px;">
               <label>최종 소개글</label>
-              <textarea class="lg" id="mateFinal" placeholder="AI 생성 후 직접 수정하세요…"></textarea>
+              <textarea class="lg" id="mateFinal" placeholder="이 모임을 함께 하고 싶은 이유, 요즘의 고민, 멤버들에게 전하고 싶은 말을 자유롭게 적어주세요…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('mateFinal', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_mateFinal"></div>
+            </div>
             </div>
           </div>
         </div>
@@ -935,7 +905,7 @@
           <div class="field">
             <label>시즌 테마 · 큐레이션 방향</label>
             <input type="text" id="seasonTheme" placeholder="예: AI 시대의 일과 삶, 경계에 선 존재들">
-            <div class="hint">4권을 묶는 큰 테마가 있다면 적어주세요. AI 추천에도 활용됩니다.</div>
+            <div class="hint">4권을 묶는 큰 테마가 있다면 적어주세요. 4권을 묶는 큰 주제가 있다면 적어주세요.</div>
           </div>
         </div>
       </div>
@@ -960,23 +930,13 @@
           <div class="field">
             <label>선정 이유</label>
             <textarea id="b1reason" placeholder="이 시대의 현자 유발 하라리는 '정보와 네트워크'라는 관점으로…" oninput="countChars(this,'b1rc')"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b1reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b1reason"></div>
+            </div>
             <div class="char-count" id="b1rc">0자</div>
           </div>
-          <div class="ai-actions">
-            <button class="btn-ai" onclick="genBookReason(1)">
-              <div class="spinner"></div><span class="label">✨ 선정 이유 완성</span>
-            </button>
-            <button class="btn-ai btn-ai-ghost" onclick="recBooks()">
-              <div class="spinner"></div><span class="label">🔍 도서 추천받기</span>
-            </button>
-          </div>
-          <div class="ai-output" id="b1out">
-            <div class="ai-output-text"></div>
-            <div class="ai-output-actions">
-              <button class="btn-use" onclick="applyBookAi(1)">← 적용하기</button>
-              <button class="btn-copy-small" onclick="copyText('b1out')">복사</button>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -995,19 +955,12 @@
             <div class="field">
               <label>선정 이유</label>
               <textarea id="b2reason" placeholder="우리는 왜 이렇게 일하게 되었을까요?…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b2reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b2reason"></div>
             </div>
-            <div class="ai-actions">
-              <button class="btn-ai" onclick="genBookReason(2)">
-                <div class="spinner"></div><span class="label">✨ 선정 이유 완성</span>
-              </button>
             </div>
-            <div class="ai-output" id="b2out">
-              <div class="ai-output-text"></div>
-              <div class="ai-output-actions">
-                <button class="btn-use" onclick="applyBookAi(2)">← 적용하기</button>
-                <button class="btn-copy-small" onclick="copyText('b2out')">복사</button>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -1024,19 +977,12 @@
             <div class="field">
               <label>선정 이유</label>
               <textarea id="b3reason" placeholder="앞선 책들을 통해 우리는 노동과 기술, 사회 구조의 변화를…"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b3reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b3reason"></div>
             </div>
-            <div class="ai-actions">
-              <button class="btn-ai" onclick="genBookReason(3)">
-                <div class="spinner"></div><span class="label">✨ 선정 이유 완성</span>
-              </button>
             </div>
-            <div class="ai-output" id="b3out">
-              <div class="ai-output-text"></div>
-              <div class="ai-output-actions">
-                <button class="btn-use" onclick="applyBookAi(3)">← 적용하기</button>
-                <button class="btn-copy-small" onclick="copyText('b3out')">복사</button>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -1053,19 +999,12 @@
             <div class="field">
               <label>선정 이유 / 협의 안내</label>
               <textarea id="b4reason" placeholder="*이후의 책은 멤버들과 협의하여 정합니다." style="min-height:80px;"></textarea>
+            <div class="spell-wrap">
+              <button class="btn-spell" onclick="checkSpell('b4reason', this)">🔍 맞춤법 검사</button>
+              <div class="spell-result" id="spell_b4reason"></div>
             </div>
-            <div class="ai-actions">
-              <button class="btn-ai" onclick="genBookReason(4)">
-                <div class="spinner"></div><span class="label">✨ 선정 이유 완성</span>
-              </button>
             </div>
-            <div class="ai-output" id="b4out">
-              <div class="ai-output-text"></div>
-              <div class="ai-output-actions">
-                <button class="btn-use" onclick="applyBookAi(4)">← 적용하기</button>
-                <button class="btn-copy-small" onclick="copyText('b4out')">복사</button>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -1214,209 +1153,106 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// ══════════ AI ══════════
-async function callAI(prompt) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-  const d = await res.json();
-  return d.content?.[0]?.text || '생성 실패. 다시 시도해주세요.';
-}
 
-function setLoading(btn, on) {
-  btn.disabled = on;
-  on ? btn.classList.add('loading') : btn.classList.remove('loading');
-}
 
-function showAiOut(elId, text) {
-  const el = document.getElementById(elId);
-  el.querySelector('.ai-output-text').textContent = text;
-  el.classList.add('show');
-}
 
-// 소개글 AI
-async function genIntro(type) {
-  const btn = event.currentTarget; setLoading(btn, true);
-  const isNew = document.getElementById('itNew').checked;
-  const club = v('clubName'); const season = v('clubSeason');
-  const headline = v(isNew ? 'clubHeadline' : 'contHeadline');
-  const body = v(isNew ? 'clubIntroText' : 'contIntroText');
-  const target = v('clubTarget'); const share = v('clubShare');
 
-  const prompts = {
-    headline: `베이트리 북클럽(부산 독서 커뮤니티) 모임 상품 페이지의 H2 제목 카피를 작성해주세요.
-모임: ${club} / 시즌: ${season}
-현재 제목 초안: ${headline || '없음'}
-본문 힌트: ${body}
-베이트리 톤(따뜻한 지성, 질문형, 대비형). 15~25자의 강렬한 제목 3가지를 제안하세요. 번호 목록으로만 출력.`,
-    body: `베이트리 북클럽 상품 페이지 소개글 본문을 작성해주세요.
-모임: ${club} / 시즌: ${season} / 성격: ${v('clubType')}
-제목: ${headline}
-초안: ${body}
-추천 대상: ${target}
-함께 나눌 것: ${share}
-${isNew ? '신규 모임' : '이어지는 모임'}
-200~300자. 베이트리 톤. 왜 이 모임인지, 어떤 사람을 위한지, 무엇을 나눌지 자연스럽게 담아주세요. 바로 본문만.`,
-    sns: `베이트리 북클럽 인스타그램/스레드용 SNS 캡션을 작성해주세요.
-모임: ${club} / 제목: ${headline} / 내용 힌트: ${body}
-120자 내외, 저장하고 싶은 문장, 해시태그 4개 포함. 바로 본문만.`
-  };
+
+
+// ══════════ 맞춤법 검사 ══════════
+async function checkSpell(targetId, btn) {
+  const ta = document.getElementById(targetId);
+  if (!ta || !ta.value.trim()) { showToast('먼저 내용을 입력해주세요.'); return; }
+  const resultEl = document.getElementById('spell_' + targetId);
+  const text = ta.value.trim();
+
+  btn.disabled = true;
+  btn.textContent = '검사 중…';
+  resultEl.className = 'spell-result';
+  resultEl.innerHTML = '';
 
   try {
-    const result = await callAI(prompts[type]);
-    showAiOut('introAiOut', result);
-    showToast('소개글이 생성되었어요!');
-  } catch(e) { showToast('생성 오류가 발생했어요.'); }
-  setLoading(btn, false);
-}
+    // Naver 맞춤법 검사기 (CORS 프록시 경유)
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const targetUrl = encodeURIComponent(
+      'https://m.search.naver.com/p/csearch/content/apicall/spellcheck/spellcheckpc?_callback=cb&q=' + encodeURIComponent(text)
+    );
+    const res = await fetch(proxyUrl + targetUrl);
+    const raw = await res.text();
 
-function applyIntroAi() {
-  const text = document.getElementById('introAiOut').querySelector('.ai-output-text').textContent;
-  const isNew = document.getElementById('itNew').checked;
-  const el = document.getElementById(isNew ? 'clubIntroText' : 'contIntroText');
-  if (el) { el.value = text; countChars(el, isNew ? 'introCount' : 'contCount'); }
-  showToast('적용되었어요!');
-}
+    // JSONP 파싱: cb({...}) → {...}
+    const jsonStr = raw.replace(/^cb\(/, '').replace(/\);?\s*$/, '');
+    const json = JSON.parse(jsonStr);
+    const result = json.message?.result;
 
-// 호스트 AI
-async function genHost() {
-  const btn = event.currentTarget; setLoading(btn, true);
-  const isCont = document.getElementById('htCont').checked;
-  const prompt = `베이트리 북클럽 독서모임 ${isCont ? '이어지는' : '신규'} 호스트 소개글을 작성해주세요.
-모임: ${v('clubName')} / 호스트: ${v('hostName')}
-배경: ${v('hostBg')}
-요즘 고민: ${v('hostWhy')}
-독서와의 관계: ${v('hostReading')}
-멤버들에게: ${v('hostWish')}
-${isCont ? '지난 시즌 소감: ' + v('hostLastFeel') : ''}
+    if (!result) throw new Error('응답 없음');
 
-실제 상품 페이지 예시 문체:
-"고민이 생기면 자연스레 책을 펼칩니다. 요즘 제 가장 큰 고민은... 이 고민은 단순히... 을 넘어 ... 로 이어지고 있습니다. 비슷한 고민을 가진 사람들과 함께 읽고 사유하며..."
+    const errors = result.errata_count || 0;
+    const html = (result.html || text)
+      .replace(/<span class="highlight_wrong">(.*?)<\/span>/g,
+        (_, w) => `<span class="spell-error">${w}</span>`)
+      .replace(/<span class="highlight_fix">(.*?)<\/span>/g,
+        (_, w) => `<span class="spell-correct">${w}</span>`);
 
-이 문체를 참고해 1인칭으로 200~280자. 진솔하고 따뜻하게. 바로 본문만.`;
-  try {
-    const result = await callAI(prompt);
-    showAiOut('hostAiOut', result);
-    showToast('호스트 소개글이 생성되었어요!');
-  } catch(e) { showToast('생성 오류가 발생했어요.'); }
-  setLoading(btn, false);
-}
-
-function applyHostAi() {
-  const text = document.getElementById('hostAiOut').querySelector('.ai-output-text').textContent;
-  document.getElementById('hostFinal').value = text;
-  showToast('적용되었어요!');
-}
-
-// 메이트 AI
-async function genMate() {
-  const btn = event.currentTarget; setLoading(btn, true);
-  const isCont = document.getElementById('mtCont').checked;
-
-  let prompt;
-  if (isCont) {
-    prompt = `베이트리 북클럽 독서모임 이어지는 메이트 소개글을 작성해주세요.
-모임: ${v('clubName')} / 메이트: ${v('mateName')}
-합류 이유: ${v('mateJoin')}
-요즘의 고민: ${v('mateWhyCont')}
-독서모임을 하면서 느낀 점: ${v('mateContFeel')}
-멤버들에게 전하고 싶은 말: ${v('mateContWish')}
-
-실제 예시 문체:
-"고민이 생기면 자연스레 책을 펼칩니다. 요즘 제 가장 큰 고민은... 지난 시즌 함께 읽으면서 ...를 배웠어요. 이번 시즌도 비슷한 고민을 가진 분들과 함께..."
-
-이 문체를 참고해 1인칭으로 200~260자. 지난 시즌에서 이어지는 느낌, 진솔하고 따뜻하게. 바로 본문만.`;
-  } else {
-    prompt = `베이트리 북클럽 독서모임 신규 메이트 소개글을 작성해주세요.
-모임: ${v('clubName')} / 메이트: ${v('mateName')}
-합류 이유: ${v('mateJoin')}
-요즘의 고민: ${v('mateWhy')}
-멤버들에게 전하고 싶은 말: ${v('mateWish')}
-
-실제 예시 문체:
-"고민이 생기면 자연스레 책을 펼칩니다. 요즘 제 가장 큰 고민은... 이 고민은 단순히 ...를 넘어 ...로 이어지고 있습니다. 비슷한 고민을 가진 분들과 함께 읽고 사유하며..."
-
-이 문체를 참고해 1인칭으로 180~240자. 진솔하고 따뜻하게. 바로 본문만.`;
+    if (errors === 0) {
+      resultEl.className = 'spell-result ok show';
+      resultEl.innerHTML = '✅ 맞춤법 오류가 없습니다.';
+    } else {
+      resultEl.className = 'spell-result has-error show';
+      // 교정 제안 추출
+      const corrected = (result.notag_html || '').replace(/<[^>]+>/g, '');
+      resultEl.innerHTML = `⚠️ <strong>오류 ${errors}건</strong> 발견\n\n${html}`
+        + (corrected && corrected !== text
+            ? `\n\n<button class="spell-apply-btn" onclick="applySpell('${targetId}', this)">교정안 적용하기</button>`
+            : '');
+      // 교정 텍스트를 버튼에 저장
+      if (corrected) resultEl.dataset.corrected = corrected;
+    }
+  } catch (e) {
+    // 프록시 실패 시 기본 안내
+    resultEl.className = 'spell-result has-error show';
+    resultEl.innerHTML = '⚠️ 맞춤법 서비스에 연결할 수 없어요.\n네이버 맞춤법 검사기(<a href="https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=%EB%A7%9E%EC%B6%A4%EB%B2%95+%EA%B2%80%EC%82%AC%EA%B8%B0" target="_blank" style="color:var(--gold)">링크</a>)에서 직접 확인해주세요.';
   }
 
-  try {
-    const result = await callAI(prompt);
-    showAiOut('mateAiOut', result);
-    showToast('메이트 소개글이 생성되었어요!');
-  } catch(e) { showToast('생성 오류가 발생했어요.'); }
-  setLoading(btn, false);
+  btn.disabled = false;
+  btn.textContent = '🔍 맞춤법 검사';
 }
 
-function applyMateAi() {
-  const text = document.getElementById('mateAiOut').querySelector('.ai-output-text').textContent;
-  document.getElementById('mateFinal').value = text;
-  showToast('적용되었어요!');
+function applySpell(targetId, btn) {
+  const resultEl = document.getElementById('spell_' + targetId);
+  const corrected = resultEl.dataset.corrected;
+  if (!corrected) return;
+  const ta = document.getElementById(targetId);
+  ta.value = corrected;
+  // char count 업데이트
+  const countId = ta.getAttribute('oninput')?.match(/'(\w+Count)'/)?.[1];
+  if (countId) countChars(ta, countId);
+  showToast('교정안이 적용됐어요!');
+  resultEl.className = 'spell-result ok show';
+  resultEl.innerHTML = '✅ 교정안이 적용됐습니다.';
 }
 
-// 도서 선정 이유 AI
-async function genBookReason(n) {
-  const btn = event.currentTarget; setLoading(btn, true);
-  const emojis = { 1:'📗', 2:'📙', 3:'📕', 4:'📘' };
-  const ordinal = ['첫', '두', '세', '네'][n-1];
-  const title = v(`b${n}title`); const author = v(`b${n}author`);
-  const reason = v(`b${n}reason`);
+// ══════════ 노션 전송 ══════════
+const NOTION_PARENT_PAGE_ID = '3266e61e-a665-8112-b467-f9df524a893e';
+const NOTION_API_BASE = 'https://api.notion.com/v1';
 
-  const prompt = `베이트리 북클럽 상품 페이지의 ${ordinal} 번째 도서 소개글을 작성해주세요.
-모임: ${v('clubName')} (${v('clubType')})
-시즌 테마: ${v('seasonTheme')}
-책: ${title || '미입력'} / 저자: ${author || '미입력'}
-초안: ${reason || '없음'}
-
-실제 예시 문체:
-"이 시대의 현자 유발 하라리는 '정보와 네트워크'라는 관점으로 역사를 다시 썼습니다. AI시대로 접어들며... 역사 속에서 '나'라는 사람은 어떤 역할과 책임을 가진 인간으로 살 것인지..."
-
-이 문체를 참고해 100~160자. 독자가 읽고 싶게. 질문으로 마무리해도 좋음. 바로 본문만.`;
+async function sendToNotion(data) {
+  // Notion API는 CORS 미지원이므로 Apps Script Webhook을 통해 전달
+  // notion_flag를 true로 설정하면 Apps Script에서 Notion API 호출
+  const webhookUrl = v('webhookUrl');
+  if (!webhookUrl) return { ok: false, reason: 'no_webhook' };
 
   try {
-    const result = await callAI(prompt);
-    showAiOut(`b${n}out`, result);
-    showToast(`${n}회차 도서 소개가 완성되었어요!`);
-  } catch(e) { showToast('생성 오류가 발생했어요.'); }
-  setLoading(btn, false);
-}
-
-function applyBookAi(n) {
-  const text = document.getElementById(`b${n}out`).querySelector('.ai-output-text').textContent;
-  document.getElementById(`b${n}reason`).value = text;
-  showToast('적용되었어요!');
-}
-
-// 도서 추천
-async function recBooks() {
-  const btn = event.currentTarget; setLoading(btn, true);
-  const prompt = `베이트리 북클럽 도서 큐레이터입니다.
-모임: ${v('clubName')} (${v('clubType')})
-시즌 테마: ${v('seasonTheme')}
-첫 책: ${v('b1title')} (${v('b1author')})
-
-이 모임에 어울리는 도서 3~4권을 추천해주세요.
-조건: 반드시 한국어 번역본이 있는 책, 모임 성격·테마와 맞는 책, 회차 순서에 맞게 배치.
-형식: [회차] 제목 / 저자\n→ 추천 이유 (2문장)
-바로 목록만 출력.`;
-
-  try {
-    const result = await callAI(prompt);
-    showAiOut('b1out', '📚 추천 도서 목록\n\n' + result);
-    showToast('추천 도서 목록이 생성되었어요!');
-  } catch(e) { showToast('생성 오류가 발생했어요.'); }
-  setLoading(btn, false);
-}
-
-// ══════════ COPY ══════════
-function copyText(elId) {
-  const text = document.getElementById(elId).querySelector('.ai-output-text').textContent;
-  navigator.clipboard.writeText(text).then(() => showToast('복사되었어요!'));
+    await fetch(webhookUrl + '?target=notion', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, _notion: true, _notionParent: NOTION_PARENT_PAGE_ID })
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
 }
 
 // ══════════ PREVIEW ══════════
@@ -1657,25 +1493,41 @@ async function submitPage() {
   var data        = collectData();
   var webhookUrl  = v('webhookUrl');
   var htmlContent = generateFinalHTML();
-  var results     = { sheets: null, html: false };
+  var results     = { sheets: null, notion: null, html: false };
 
   // ① Google Sheets 전송
   if (webhookUrl) {
     showToast('📤 Google Sheets에 전송 중...');
     try {
-      var res = await fetch(webhookUrl, {
+      await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(data)
       });
-      var json = await res.json();
-      results.sheets = json.ok ? 'ok' : 'fail';
+      results.sheets = 'ok';
     } catch (err) {
       results.sheets = 'fail';
     }
   }
 
-  // ② HTML 파일 다운로드
+  // ② 노션 페이지 생성 (Apps Script 경유)
+  if (webhookUrl) {
+    showToast('📝 노션 페이지 생성 중...');
+    try {
+      await fetch(webhookUrl + '?target=notion', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ ...data, _notion: true, _notionParent: NOTION_PARENT_PAGE_ID })
+      });
+      results.notion = 'ok';
+    } catch (err) {
+      results.notion = 'fail';
+    }
+  }
+
+  // ③ HTML 파일 다운로드
   try {
     var name = clubName.replace(/\s+/g, '-');
     var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -1690,7 +1542,7 @@ async function submitPage() {
     results.html = false;
   }
 
-  // ③ 결과 모달 표시
+  // ④ 결과 모달 표시
   showResultModal(clubName, webhookUrl, results);
 }
 
@@ -1706,6 +1558,15 @@ function showResultModal(clubName, webhookUrl, results) {
     sheetsMsg = '<div class="rm-row rm-ok"><span>📊 Google Sheets</span><span>✅ 저장 완료 · Gmail 알림 발송</span></div>';
   } else {
     sheetsMsg = '<div class="rm-row rm-fail"><span>📊 Google Sheets</span><span>❌ 전송 실패 · URL 확인 필요</span></div>';
+  }
+
+  var notionMsg = '';
+  if (!webhookUrl) {
+    notionMsg = '<div class="rm-row rm-skip"><span>📝 노션</span><span>URL 미입력 · 건너뜀</span></div>';
+  } else if (results.notion === 'ok') {
+    notionMsg = '<div class="rm-row rm-ok"><span>📝 노션</span><span>✅ 페이지 생성 완료</span></div>';
+  } else {
+    notionMsg = '<div class="rm-row rm-fail"><span>📝 노션</span><span>❌ 생성 실패 · Apps Script 확인 필요</span></div>';
   }
 
   var htmlMsg = results.html
@@ -1731,7 +1592,7 @@ function showResultModal(clubName, webhookUrl, results) {
     + '.rm-fail span:last-child{color:#C62828;font-weight:500;}'
     + '.rm-skip span:last-child{color:#999;}'
     + '</style>'
-    + '<div style="padding:8px 28px 4px;">' + sheetsMsg + htmlMsg + '</div>'
+    + '<div style="padding:8px 28px 4px;">' + sheetsMsg + notionMsg + htmlMsg + '</div>'
     + '<div style="padding:20px 28px 24px;display:flex;gap:10px;justify-content:flex-end;">'
     +   '<button onclick="document.getElementById(\'resultModal\').remove()" style="padding:10px 20px;border:1.5px solid #EDE7DC;border-radius:8px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:#666;">닫기</button>'
     +   '<button onclick="openPreview();document.getElementById(\'resultModal\').remove();" style="padding:10px 20px;border:none;border-radius:8px;background:#1B3A2D;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">👁️ 미리보기 열기</button>'
